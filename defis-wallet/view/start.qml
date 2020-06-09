@@ -1,0 +1,2501 @@
+import QtQuick 2.11
+import QtQuick.Controls 1.2
+import QtQuick.Controls 2.4
+import QtQuick.Controls.Styles 1.2
+import QtGraphicalEffects 1.0
+import "controls"
+import Grimm.Wallet 1.0
+import QtQuick.Layouts 1.3
+
+Item
+{
+    id: root
+
+    anchors.fill: parent
+    property bool isLockedMode: false
+
+    StartViewModel { id: viewModel }
+
+    function migrateWalletDB(path) {
+        // copy wallet.db
+        viewModel.migrateWalletDB(path);
+        viewModel.isRecoveryMode = false;
+        startWizzardView.push(open, {
+            "firstButtonVisible": true,
+            //% "back"
+            "firstButtonText": qsTrId("start-back-button"),
+            "firstButtonIcon": "qrc:/assets/icon-back.svg",
+            "firstButtonAction": function() {
+                // remove wallet.db file
+                viewModel.deleteCurrentWalletDB();
+                startWizzardView.pop();
+            }
+        });
+    }
+
+    LogoComponent {
+        id: logoComponent
+    }
+
+    ConfirmationDialog {
+        id: restoreWalletConfirmation
+
+        //% "I agree"
+        okButtonText: qsTrId("start-restore-confirm-button")
+        okButtonIconSource: "qrc:/assets/icon-done.svg"
+        cancelVisible: false
+        width: 460
+        height: contentItem.implicitHeight + footer.implicitHeight
+        padding: 0
+
+        contentItem: Column {
+            width: parent.width
+            height: restoreWalletConfirmationTitle.implicitHeight + restoreWalletConfirmationMessage.implicitHeight
+            SFText {
+                id: restoreWalletConfirmationTitle
+                topPadding: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment: Qt.AlignHCenter
+                //% "Restore wallet"
+                text: qsTrId("start-restore-message-title")
+                color: Style.content_main
+                font.pixelSize: 18
+                font.styleName: "Bold"
+                font.weight: Font.Bold
+            }
+
+            SFText {
+                id: restoreWalletConfirmationMessage
+                padding: 30
+                anchors.horizontalCenter: parent.horizontalCenter
+                horizontalAlignment : Text.AlignHCenter
+                width: parent.width
+                //% "You are trying to restore an existing Grimm Wallet. Please notice that if you use your wallet on another device, your balance will be up to date, but  transaction history and addresses will be kept separately on each device."
+                text: qsTrId("start-restore-message-line")
+                color: Style.content_main
+                font.pixelSize: 14
+                wrapMode: Text.Wrap
+            }
+        }
+        onAccepted: {
+            onClicked: {
+                viewModel.isRecoveryMode = true;
+                startWizzardView.push(restoreWallet);
+            }
+        }
+    }
+
+    StackView {
+        id: startWizzardView
+        anchors.fill: parent
+        focus: true
+        onCurrentItemChanged: {
+            if (currentItem && currentItem.defaultFocusItem) {
+                startWizzardView.currentItem.defaultFocusItem.forceActiveFocus();
+            }
+        }
+
+        Component {
+            id: start
+            Rectangle
+            {
+                color: Style.background_main
+
+                Image {
+                    fillMode: Image.PreserveAspectCrop
+                    anchors.fill: parent
+                    source: "qrc:/assets/bg.svg"
+                }
+
+                property Item defaultFocusItem: createNewWallet
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: 100
+                        Layout.maximumHeight: 280
+                    }
+
+                    Loader {
+                        sourceComponent: logoComponent
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 200//187
+                        Layout.maximumHeight: 269
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 122
+                        Layout.maximumHeight: 207
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+
+                        CustomButton {
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            visible: startWizzardView.depth > 1
+                            onClicked: {
+                                startWizzardView.pop();
+                            }
+                        }
+
+                        PrimaryButton {
+                            id: createNewWallet
+                            anchors.verticalCenter: parent.verticalCenter
+                            //% "create new wallet"
+                            text: qsTrId("start-create-button")
+                            icon.source: "qrc:/assets/icon-add-blue.svg"
+                            onClicked:
+                            {
+                                viewModel.isRecoveryMode = false;
+                                startWizzardView.push(createWalletEntry);
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 65
+                        Layout.maximumHeight: 65
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+                        SFText {
+                            Layout.alignment: Qt.AlignHCenter
+                            //% "Restore wallet"
+                            text: qsTrId("start-restore-link")
+                            color: Style.active
+                            font.pixelSize: 14
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    restoreWalletConfirmation.open();
+                                }
+                                hoverEnabled: true
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: migrate
+            Rectangle
+            {
+                color: Style.background_main
+
+                Image {
+                    fillMode: Image.PreserveAspectCrop
+                    anchors.fill: parent
+                    source: "qrc:/assets/bg.svg"
+                }
+
+                property Item defaultFocusItem: startMigration
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: 100
+                        Layout.maximumHeight: 280
+                    }
+
+                    Loader {
+                        sourceComponent: logoComponent
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 200
+                        Layout.maximumHeight: 269
+                    }
+
+                    Item {
+                        Layout.preferredHeight: 30
+                    }
+
+                    SFText {
+                        Layout.alignment: Qt.AlignHCenter
+                        //% "Your wallet will be migrated to v."
+                        text: qsTrId("start-migration-message") + viewModel.walletVersion()
+                        color: Style.content_main
+                        font.pixelSize: 14
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                        Layout.maximumHeight: 67
+                    }
+
+                    RowLayout {
+                       Layout.alignment: Qt.AlignHCenter
+                       Layout.fillWidth: true
+
+                       PrimaryButton {
+                           id: startMigration
+                           Layout.preferredHeight: 38
+                           Layout.preferredWidth: 220
+
+                           //: migration screen, start auto migration button
+                           //% "start auto migration"
+                           text: qsTrId("start-migration-button")
+                           icon.source: "qrc:/assets/icon-repeat.svg"
+                           onClicked:
+                           {
+                               startWizzardView.push(selectWalletDBView);
+                           }
+                       }
+
+                       Item {
+                           Layout.preferredWidth: 20
+                       }
+
+                       CustomButton {
+                           Layout.preferredHeight: 38
+                           Layout.preferredWidth: 320
+                           //: migration screen, select db file button
+                           //% "select wallet database file manually"
+                           text: qsTrId("start-migration-select-file-button")
+                           icon.source: "qrc:/assets/icon-folder.svg"
+                           onClicked: {
+                                 var path = viewModel.selectCustomWalletDB();
+
+                                if (path.length > 0) {
+                                    migrateWalletDB(path);
+                                }
+                                      }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                        Layout.maximumHeight: 65
+                    }
+
+                    SFText {
+                        Layout.alignment: Qt.AlignHCenter
+                        //% "Restore wallet or create new one"
+                        text: qsTrId("start-login-another-message")
+                        color: Style.new_white
+                        font.pixelSize: 14
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                startWizzardView.push(start);
+                            }
+                            hoverEnabled: true
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: selectWalletDBView
+            Rectangle
+            {
+                color: Style.background_main
+                function next() {
+                    if (nextButton.enabled) {
+                        nextButton.clicked();
+                    }
+                }
+                Keys.onReturnPressed: {
+                    next();
+                }
+                Keys.onEnterPressed:{
+                    next();
+                }
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+
+                    SFText {
+                        Layout.alignment: Qt.AlignHCenter
+                        horizontalAlignment: Qt.AlignHCenter
+                        //% "Select the wallet database file"
+                        text: qsTrId("start-select-db-message")
+                        color: Style.content_main
+                        font.pixelSize: 36
+                    }
+
+                    CustomTableView {
+                        id: tableView
+                        property int rowHeight: 44
+                        property int minWidth: 894
+                        property int textLeftMargin: 20
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 50
+                        Layout.bottomMargin: 9
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: headerHeight + 3*rowHeight
+                        Layout.maximumHeight: headerHeight + 5*rowHeight
+                        Layout.minimumWidth: minWidth
+                        Layout.maximumWidth: minWidth
+
+                        frameVisible: false
+                        selectionMode: SelectionMode.SingleSelection
+                        backgroundVisible: false
+                        model: viewModel.walletDBpaths
+
+                        headerDelegate: Rectangle {
+                            height: tableView.headerHeight
+                            color: Style.background_second
+
+                            SFLabel {
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.leftMargin: tableView.textLeftMargin
+                                horizontalAlignment: Qt.AlignHCenter
+                                font.pixelSize: tableView.headerTextFontSize
+                                color: Style.content_secondary
+                                font.weight: Font.Normal
+                                text: styleData.value
+                            }
+                        }
+
+                        TableViewColumn {
+                            role: "fullPath"
+                            //% "Name"
+                            title: qsTrId("start-select-db-thead-name")
+                            width: 350
+                            movable: false
+                            delegate: Item {
+                                width: parent.width
+                                height: tableView.rowHeight
+                                clip:true
+
+                                SFLabel {
+                                    id: pathLabel
+                                    property bool isPreferred: (viewModel.walletDBpaths && viewModel.walletDBpaths[styleData.row]) ? viewModel.walletDBpaths[styleData.row].isPreferred : false
+                                    property string preferredLabelFormat: "<style>span {color: '#00f6d2';}</style><span>%1</span>"
+
+                                    //: start screen, select db for migration, best match label
+                                    //% "(best match)"
+                                    property string bestMatchStr: qsTrId("start-select-db-best-match-label")
+
+                                    font.pixelSize: 14
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: tableView.textLeftMargin
+                                    anchors.right: parent.right
+
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    textFormat: Text.RichText
+                                    text: elidedText(styleData.value, isPreferred) + (isPreferred ? " " + preferredLabelFormat.arg(bestMatchStr) : " ")
+
+                                    color: Style.content_main
+                                    copyMenuEnabled: true
+                                    onCopyText: viewModel.copyToClipboard(text)
+                                    Component.onCompleted: {
+
+                                        if (isPreferred) {
+                                            tableView.selection.select(styleData.row);
+                                            tableView.currentRow = styleData.row;
+
+                                        }
+                                    }
+                                    function elidedText(str, isPreferred){
+                                         var textMetricsTemplate = 'import QtQuick 2.11; TextMetrics{font{family: "SF Pro Display";styleName: "Regular";weight: Font.Normal;pixelSize: 14;}elide: Text.ElideLeft;elideWidth: parent.width - tableView.textLeftMargin;text: "%1"}';
+                                         var fullTextStr = isPreferred ? str + " " + pathLabel.bestMatchStr: str;
+                                         var textMetrics= Qt.createQmlObject(
+                                                 textMetricsTemplate.arg(fullTextStr),
+                                                 pathLabel,
+                                                 "textMetrics");
+                                         var elidedCount = fullTextStr.length - textMetrics.elidedText.length;
+                                         return elidedCount ? "…" + str.substr(elidedCount + 3, str.length) : str;
+
+                                    }
+                                }
+                            }
+                        }
+
+                        TableViewColumn {
+                            role: "fileSize"
+                            //% "Size"
+                            title: qsTrId("start-select-db-thead-size")
+                            width: 120
+                            movable: false
+                            delegate: Item {
+                                width: parent.width
+                                height: tableView.rowHeight
+                                clip:true
+
+                                SFLabel {
+                                    font.pixelSize: 14
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: tableView.textLeftMargin
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    //% "kb"
+                                    text: Math.round(styleData.value / 1024) + " " + qsTrId("kb-unit")
+                                    color: Style.content_main
+                                }
+                            }
+                        }
+
+                        TableViewColumn {
+                            role: "creationDateString"
+                            //: start screen, select db for migration, Date created column title
+                            //% "Date created"
+                            title: qsTrId("start-select-db-thead-created")
+                            width: 145
+                            movable: false
+                        }
+
+                        TableViewColumn {
+                            role: "lastWriteDateString"
+                            //: start screen, select db for migration, Date modified column title
+                            //% "Date modified"
+                            title: qsTrId("start-select-db-thead-modified")
+                            width: 145
+                            movable: false
+                        }
+
+                        TableViewColumn {
+                            role: "fullPath"
+                            width: 150
+                            movable: false
+                            delegate: Item {
+                                width: parent.width
+                                height: tableView.rowHeight
+                                clip:true
+
+                                SFLabel {
+                                    font.pixelSize: 14
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: tableView.textLeftMargin
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    //: start screen, select db for migration, show in folder label
+                                    //% "show in folder"
+                                    text: qsTrId("start-select-db-show-in-folder-label")
+                                    color: Style.active
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        acceptedButtons: Qt.LeftButton
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            viewModel.openFolder(styleData.value);
+                                        }
+                                    }
+                                }
+                            }
+                          }
+
+                        rowDelegate: Item {
+                            height: tableView.rowHeight
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: styleData.selected ? Style.row_selected : Style.background_row_even
+                                visible: styleData.alternate || styleData.selected
+                            }
+                        }
+
+                        itemDelegate: TableItem {
+                            elide: Text.ElideRight
+                            clip:true
+
+                            SFLabel {
+                                font.pixelSize: 14
+                                anchors.left: parent.left
+                                anchors.leftMargin: tableView.textLeftMargin
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: styleData.value
+                                color: Style.content_main
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 64
+                    }
+
+                    Row {
+                        id: buttons
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+
+                        CustomButton {
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            visible: startWizzardView.depth > 1
+                            onClicked: {
+                                startWizzardView.pop();
+                            }
+                        }
+
+
+
+                        PrimaryButton {
+                            id: nextButton
+                            //% "next"
+                            text: qsTrId("start-next-button")
+                            icon.source: "qrc:/assets/icon-next-blue.svg"
+                            enabled: tableView.currentRow >= 0
+                            onClicked: {
+                                migrateWalletDB(viewModel.walletDBpaths[tableView.currentRow].fullPath);
+                            }
+                        }
+
+
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                        Layout.maximumHeight: 65
+                    }
+
+                    SFText {
+                        Layout.alignment: Qt.AlignHCenter
+                        //% "Restore wallet or create new one"
+                        text: qsTrId("start-login-another-message")
+                        color: Style.new_white
+                        font.pixelSize: 14
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                startWizzardView.push(start);
+                            }
+                            hoverEnabled: true
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 60
+                        Layout.maximumHeight: 90
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: createWalletEntry
+            Rectangle
+            {
+                color: Style.background_main
+                property Item defaultFocusItem: generateRecoveryPhraseButton
+
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+                    Column {
+                        spacing: 30
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Create new wallet"
+                            text: qsTrId("start-create-new-title")
+                            color: Style.content_main
+                            font.pixelSize: 36
+                        }
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Create new wallet with generating seed phrase."
+                            text: qsTrId("start-create-new-message-line-1")
+                            color: Style.content_main
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "If you ever lose your device, you will need this phrase to recover your wallet!"
+                            text: qsTrId("start-create-new-message-line-2")
+                            color: Style.content_main
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    Row {
+                        topPadding: 100
+                        spacing: 65
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.minimumHeight : 300
+                        Layout.maximumHeight: 500
+                        SecurityNote{
+                            iconSource: "qrc:/assets/eye.svg"
+                            //% "Do not let anyone see your seed phrase"
+                            text: qsTrId("start-create-new-securiry-note-1")
+                        }
+                        SecurityNote{
+                            iconSource: "qrc:/assets/password.svg"
+                            //% "Never type your seed phrase into password managers or elsewhere"
+                            text: qsTrId("start-create-new-securiry-note-2")
+                        }
+                        SecurityNote{
+                            iconSource: "qrc:/assets/copy-two-paper-sheets-interface-symbol.svg"
+                            //% "Keep the copies of your seed phrase in a safe place"
+                            text: qsTrId("start-create-new-securiry-note-3")
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+
+                        CustomButton {
+                            //% "back"
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            onClicked: startWizzardView.pop();
+                        }
+
+                        PrimaryButton {
+                            id: generateRecoveryPhraseButton
+                            //% "generate seed phrase"
+                            text: qsTrId("start-generate-seed-phrase-button")
+                            icon.source: "qrc:/assets/icon-recovery.svg"
+                            onClicked: startWizzardView.push(generateRecoveryPhrase);
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                        Layout.maximumHeight: 143
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: generateRecoveryPhrase
+            Rectangle {
+                color: Style.background_main
+                property Item defaultFocusItem: nextButton
+
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+                    Column {
+                        spacing: 30
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        Layout.preferredWidth: 730
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Create new wallet"
+                            text: qsTrId("start-create-new-title")
+                            color: Style.content_main
+                            font.pixelSize: 36
+                        }
+                        SFText {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Your seed phrase is the access key to all the cryptocurrencies in your wallet. Write down the phrase to keep it in a safe or in a locked vault. Without the phrase you will not be able to recover your money."
+                            text: qsTrId("start-generate-seed-phrase-message")
+                            color: Style.content_main
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                    }
+                    ConfirmationDialog {
+                        id: confirRecoveryPhrasesDialog
+                        //% "I understand"
+                        okButtonText: qsTrId("start-confirm-seed-phrase-button")
+                        okButtonIconSource: "qrc:/assets/icon-done.svg"
+                        cancelVisible: false
+                        width: 460
+                        //% "It is strictly recommended to write down the seed phrase on a paper. Storing it in a file makes it prone to cyber attacks and, therefore, less secure."
+                        text: qsTrId("start-confirm-seed-phrase-message")
+                        onAccepted: {
+                            onClicked: startWizzardView.push(checkRecoveryPhrase);
+                        }
+                    }
+                    Grid{
+                        id: phrasesView
+                        Layout.alignment: Qt.AlignHCenter
+
+                        topPadding: 50
+                        columnSpacing: 30
+                        rowSpacing:  20
+
+                        Repeater {
+                            model:viewModel.recoveryPhrases
+                            Rectangle{
+                                border.color: Style.background_second
+                                color: "transparent"
+                                width: 160
+                                height: 38
+                                radius: 30
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.leftMargin: 9
+                                    anchors.left: parent.left
+                                    color: Style.background_second
+                                    width: 20
+                                    height: 20
+                                    radius: 10
+                                    SFText {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: modelData.index + 1
+                                        font.pixelSize: 10
+                                        color: Style.content_main
+                                        opacity: 0.5
+                                    }
+                                }
+                                SFText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: modelData.phrase
+                                    font.pixelSize: 14
+                                    color: Style.content_main
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 50
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+
+                        spacing: 30
+
+                        CustomButton {
+                            //% "back"
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            onClicked: {
+                                startWizzardView.pop();
+                                viewModel.resetPhrases();
+                            }
+                        }
+
+                        PrimaryButton {
+                            id: nextButton
+                            //% "next"
+                            text: qsTrId("start-next-button")
+                            icon.source: "qrc:/assets/icon-next-blue.svg"
+                            onClicked: {confirRecoveryPhrasesDialog.open();}
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                        Layout.maximumHeight: 143
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: checkRecoveryPhrase
+            Rectangle {
+                color: Style.background_main
+                property Item defaultFocusItem: null
+
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+                    Column {
+                        spacing: 30
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        Layout.preferredWidth: 730
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Create new wallet"
+                            text: qsTrId("start-create-new-title")
+                            color: Style.content_main
+                            font.pixelSize: 36
+                        }
+                        SFText {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "To ensure the seed phrase is written down, please fill-in the specific words below"
+                            text: qsTrId("start-check-seed-phrase-message")
+                            color: Style.content_main
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    Grid{
+                        Layout.alignment: Qt.AlignHCenter
+
+                        topPadding: 50
+                        columnSpacing: 30
+                        rowSpacing:  20
+
+                        Repeater {
+                            model:viewModel.checkPhrases
+
+                            Row {
+                                width: 160
+                                height: 38
+                                spacing: 20
+                                Item {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.leftMargin: 9
+                                    width: 20
+                                    height: 20
+                                    Rectangle {
+                                        color: "transparent"
+                                        border.color: Style.content_secondary
+                                        width: 20
+                                        height: 20
+                                        radius: 10
+                                        SFText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: modelData.index + 1
+                                            font.pixelSize: 10
+                                            color: Style.content_secondary
+                                        }
+                                        visible: modelData.value.length == 0
+                                    }
+
+                                    Rectangle {
+                                        id: correctPhraseRect
+                                        color: modelData.isCorrect ? Style.active : Style.validator_error
+                                        width: 20
+                                        height: 20
+                                        radius: 10
+                                        SFText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: modelData.index + 1
+                                            font.pixelSize: 10
+                                            color: Style.background_main
+                                        }
+                                        visible: modelData.value.length > 0
+                                    }
+
+                                    DropShadow {
+                                        anchors.fill: correctPhraseRect
+                                        radius: 5
+                                        samples: 9
+                                        color: modelData.isCorrect ? Style.active : Style.validator_error
+                                        source: correctPhraseRect
+                                        visible: correctPhraseRect.visible
+                                    }
+                                }
+
+                                SFTextInput {
+                                    id: phraseValue
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 6
+                                    width: 121
+                                    font.pixelSize: 14
+                                    color: (modelData.isCorrect || modelData.value.length == 0) ? Style.content_main : Style.validator_error
+                                    backgroundColor: (modelData.isCorrect || modelData.value.length == 0) ? Style.content_main : Style.validator_error
+                                    text: modelData.value
+                                    Component.onCompleted: {
+                                        modelData.value = "";
+                                        if (defaultFocusItem == null) {
+                                            defaultFocusItem = phraseValue;
+                                        }
+                                    }
+                                }
+                                Binding {
+                                    target: modelData
+                                    property: "value"
+                                    value: phraseValue.text
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 120
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+
+                        spacing: 30
+
+                        CustomButton {
+                            //% "back"
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            onClicked: {
+                                startWizzardView.pop();
+                                viewModel.resetPhrases();
+                            }
+                        }
+
+                        PrimaryButton {
+                            id: checkRecoveryNextButton
+                            //% "next"
+                            text: qsTrId("start-next-button")
+                            enabled: {
+                                var enable = true;
+                                for(var i = 0; i < viewModel.checkPhrases.length; ++i)
+                                {
+                                    enable &= viewModel.checkPhrases[i].isCorrect;
+                                }
+                                return enable;
+                            }
+                            icon.source: "qrc:/assets/icon-next-blue.svg"
+                            onClicked: startWizzardView.push(create);
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                        Layout.maximumHeight: 143
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: restoreWallet
+            Rectangle {
+                color: Style.background_main
+                property Item defaultFocusItem: null
+
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+                    Column {
+                        spacing: 30
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        Layout.preferredWidth: 730
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Restore wallet"
+                            text: qsTrId("start-restore-title")
+                            color: Style.content_main
+                            font.pixelSize: 36
+                        }
+                        SFText {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Type in or paste your seed phrase"
+                            text: qsTrId("start-restore-message")
+                            color: Style.content_main
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    Grid{
+                        Layout.alignment: Qt.AlignHCenter
+
+                        topPadding: 50
+                        columnSpacing: 30
+                        rowSpacing:  20
+
+                        Repeater {
+                            model:viewModel.recoveryPhrases
+
+                            Row {
+                                width: 160
+                                height: 38
+                                spacing: 20
+                                Item {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.leftMargin: 9
+                                    width: 20
+                                    height: 20
+                                    Rectangle {
+                                        color: "transparent"
+                                        border.color: Style.background_second
+                                        width: 20
+                                        height: 20
+                                        radius: 10
+                                        SFText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: modelData.index + 1
+                                            font.pixelSize: 10
+                                            color: Style.background_second
+                                        }
+                                        visible: modelData.value.length == 0
+                                    }
+
+                                    Rectangle {
+                                        id: correctPhraseRect
+                                        color: modelData.isAllowed ? Style.background_second : Style.validator_error
+                                        width: 20
+                                        height: 20
+                                        radius: 10
+                                        SFText {
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: modelData.index + 1
+                                            font.pixelSize: 10
+                                            color: Style.content_main
+                                            opacity: 0.5
+                                        }
+                                        visible: modelData.value.length > 0
+                                    }
+                                }
+
+                                SFTextInput {
+                                    id: phraseValue
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: 6
+                                    width: 121
+                                    font.pixelSize: 14
+                                    color: (modelData.isAllowed || modelData.value.length == 0) ? Style.content_main : Style.validator_error
+                                    backgroundColor: (modelData.isAllowed || modelData.value.length == 0) ? Style.content_main : Style.validator_error
+                                    text: modelData.value
+                                    onTextEdited: {
+                                        var phrases = text.split(viewModel.phrasesSeparator);
+                                        if (phrases.length > viewModel.recoveryPhrases.length) {
+                                            for(var i = 0; i < viewModel.recoveryPhrases.length; ++i)
+                                            {
+                                                viewModel.recoveryPhrases[i].value = phrases[i];
+                                            }
+                                        }
+                                    }
+                                    Component.onCompleted: {
+                                        if (modelData.index == 0) {
+                                            defaultFocusItem = phraseValue;
+                                        }
+                                    }
+                                }
+                                Binding {
+                                    target: modelData
+                                    property: "value"
+                                    value: phraseValue.text
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 50
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+
+                        spacing: 30
+
+                        CustomButton {
+                            //% "back"
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            onClicked: {
+                                startWizzardView.pop();
+                                viewModel.resetPhrases();
+                            }
+                        }
+
+                        PrimaryButton {
+                            id: checkRecoveryNextButton
+                            //% "next"
+                            text: qsTrId("start-next-button")
+                            enabled: {
+                                var enable = true;
+                                for(var i = 0; i < viewModel.recoveryPhrases.length; ++i)
+                                {
+                                    enable &= viewModel.recoveryPhrases[i].isAllowed;
+                                }
+                                return enable;
+                            }
+                            icon.source: "qrc:/assets/icon-next-blue.svg"
+                            onClicked: startWizzardView.push(create);
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                        Layout.maximumHeight: 143
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: create
+            Rectangle
+            {
+                color: Style.background_main
+
+                property Item defaultFocusItem: password
+                property var onEnterPassword: function() {
+                    if(password.text.length == 0)
+                    {
+                        //% "Please, enter password"
+                        passwordError.text = qsTrId("start-create-pwd-empty-error");
+                    }
+                    else if(password.text != confirmPassword.text)
+                    {
+                        //% "Passwords do not match"
+                        passwordError.text = qsTrId("start-create-pwd-not-match-error");
+                        confirmPassword.color = Style.validator_error
+                    }
+                    else
+                    {
+                        viewModel.setPassword(password.text);
+                        startWizzardView.push(nodeSetup);
+                    }
+                }
+
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+                    Column {
+                        spacing: 30
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        Layout.preferredWidth: 730
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            text: viewModel.isRecoveryMode
+                                //% "Create new password"
+                                ? qsTrId("start-recovery-title")
+                                //% "Create new wallet"
+                                : qsTrId("start-create-new-title")
+                            color: Style.content_main
+                            font.pixelSize: 36
+                        }
+                        SFText {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            horizontalAlignment: Qt.AlignHCenter
+                            text: viewModel.isRecoveryMode
+                                //% "Create new password to access your wallet"
+                                ? qsTrId("start-recovery-pwd-message")
+                                //% "Create password to access your wallet"
+                                : qsTrId("start-create-pwd-message")
+                            color: Style.content_main
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    Column {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 400
+                        Layout.topMargin: 50
+                        spacing: 30
+
+                        Column {
+                            width: parent.width
+                            spacing: 10
+
+                            SFText {
+                                //% "Password"
+                                text: qsTrId("start-pwd-label")
+                                color: Style.content_main
+                                font.pixelSize: 14
+                                font.styleName: "Bold"; font.weight: Font.Bold
+                            }
+
+                            SFTextInput {
+                                id:password
+                                width: parent.width
+                                font.pixelSize: 14
+                                color: Style.content_main
+                                echoMode: TextInput.Password
+                                onTextChanged: if (password.text.length > 0) passwordError.text = ""
+                                onAccepted: {
+                                    confirmPassword.forceActiveFocus();
+                                }
+                            }
+
+                            RowLayout{
+                                id: strengthChecker
+                                property var strengthTests:
+                                [
+                                    //: set passwort, difficulty message, very weak
+                                    //% "Very weak password"
+                                    {exp: new RegExp("(?=.{1,})")                                                               , color: Style.validator_error, msg: qsTrId("start-pwd-difficulty-very-weak")},
+                                    //: set passwort, difficulty message, weak
+                                    //% "Weak password"
+                                    {exp: new RegExp("((?=.{6,})(?=.*[0-9]))|((?=.{6,})(?=.*[A-Z]))|((?=.{6,})(?=.*[a-z]))")    , color: Style.validator_error, msg: qsTrId("start-pwd-difficulty-weak")},
+                                    //: set passwort, difficulty message, medium
+                                    //% "Medium strength password"
+                                    {exp: new RegExp("((?=.{6,})(?=.*[A-Z])(?=.*[a-z]))|((?=.{6,})(?=.*[0-9])(?=.*[a-z]))")     , color: Style.validator_warning, msg: qsTrId("start-pwd-difficulty-medium")},
+                                    //: set passwort, difficulty message, medium
+                                    //% "Medium strength password"
+                                    {exp: new RegExp("(?=.{8,})(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])")                              , color: Style.validator_warning, msg: qsTrId("start-pwd-difficulty-medium")},
+                                    //: set passwort, difficulty message, strong
+                                    //% "Strong password"
+                                    {exp: new RegExp("(?=.{10,})(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])")                             , color: Style.active, msg: qsTrId("start-pwd-difficulty-strong")},
+                                    //: set passwort, difficulty message, very strong
+                                    //% "Very strong password"
+                                    {exp: new RegExp("(?=.{10,})(?=.*[!@#\$%\^&\*])(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])")          , color: Style.active, msg: qsTrId("start-pwd-difficulty-very-strong")},
+                                ]
+
+                                function passwordStrength(pass)
+                                {
+                                    for(var i = strengthTests.length - 1; i >= 0; i--)
+                                        if(strengthTests[i].exp.test(pass))
+                                            return i + 1;
+
+                                    return 0;
+                                }
+
+                                property var strength: passwordStrength(password.text)
+                                width: parent.width
+                                spacing: 8
+
+                                Repeater{
+                                    model: parent.strengthTests.length
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 4
+                                        border.width: index < parent.strength ? 0 : 1
+                                        border.color: Style.background_second
+                                        radius: 10
+                                        color: index < parent.strength ? parent.strengthTests[parent.strength-1].color : Style.background_main
+                                    }
+                                }
+                            }
+
+                            SFText {
+                                text: strengthChecker.strength > 0 ? strengthChecker.strengthTests[strengthChecker.strength-1].msg : ""
+                                color: Style.content_secondary
+                                font.pixelSize: 14
+                                height: 16
+                                width: parent.width
+                            }
+
+                            SFText {
+                                //% "Strong password needs to meet the following requirements:\n•  the length must be at least 10 characters\n•  must contain at least one lowercase letter\n•  must contain at least one uppercase letter\n•  must contain at least one number"
+                                text: qsTrId("start-create-pwd-strength-message")
+                                // text: "Strong password needs to meet the following requirements:\n•  the length must be at least 10 characters\n•  must contain at least one lowercase letter\n•  must contain at least one uppercase letter\n•  must contain at least one number"
+                                color: Style.content_secondary
+                                visible: strengthChecker.strength > 0 && strengthChecker.strength < 6
+                                font.pixelSize: 14
+                                height: 80
+                                width: parent.width
+                            }
+                        }
+
+                        Column {
+                            width: parent.width
+                            anchors.bottomMargin: 6
+                            spacing: 10
+
+                            SFText {
+                                //% "Confirm password"
+                                text: qsTrId("start-create-pwd-confirm-label")
+                                color: Style.content_main
+                                font.pixelSize: 14
+                                font.styleName: "Bold"; font.weight: Font.Bold
+                            }
+
+                            SFTextInput {
+                                id: confirmPassword
+                                width: parent.width
+
+                                font.pixelSize: 14
+                                color: Style.content_main
+                                echoMode: TextInput.Password
+                                onTextChanged: {
+                                    if (confirmPassword.text.length > 0) passwordError.text = ""
+                                    this.color = Style.content_main;
+                                }
+                                onAccepted: {
+                                    onEnterPassword();
+                                }
+                            }
+
+                            SFText {
+                                id: passwordError
+                                color: Style.validator_error
+                                font.pixelSize: 14
+                                height: 16
+                                width: parent.width
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 50
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+
+                        spacing: 30
+
+                        CustomButton {
+                            //% "back"
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            onClicked: startWizzardView.pop();
+                        }
+                        PrimaryButton {
+
+                            text: viewModel.isRecoveryMode
+                                //% "open my wallet"
+                                ? qsTrId("start-create-open-button")
+                                //% "start using your wallet"
+                                : qsTrId("start-create-finish-button")
+                            icon.source : viewModel.isRecoveryMode
+                                ? "qrc:/assets/icon-wallet-small.svg"
+                                : "qrc:/assets/icon-next-blue.svg"
+                            onClicked: {
+                                onEnterPassword();
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                        Layout.maximumHeight: 143
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: nodeSetup
+
+            Rectangle
+            {
+                id: nodeSetupRectangle
+                color: Style.background_main
+                property Item defaultFocusItem: localNodeButton
+
+                function onRestoreCancelled(useRandomNode) {
+                    if (useRandomNode) {
+                        nodeSetupRectangle.defaultFocusItem = randomNodeButton;
+                        randomNodeButton.checked = true;
+                    } else if (viewModel.getIsRunLocalNode()) {
+                        nodeSetupRectangle.defaultFocusItem = localNodeButton;
+                        localNodeButton.checked = true;
+
+                        portInput.text = viewModel.localPort;
+                        miningInput.value = viewModel.localMiningThreads;
+                      //  cac_symbolInput.text= viewModel.localNodecac_symbol;
+                        localNodePeer.text = viewModel.localNodePeer;
+                    } else {
+                        nodeSetupRectangle.defaultFocusItem = remoteNodeButton;
+                        remoteNodeButton.checked = true;
+
+                        remoteNodeAddrInput.text = viewModel.remoteNodeAddress;
+                    }
+                    nodeSetupRectangle.defaultFocusItem.focus = true;
+                }
+
+                ColumnLayout {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
+                    anchors.topMargin: 50
+                    Column {
+                        spacing: 30
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        Layout.preferredWidth: 730
+                        SFText {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            horizontalAlignment: Qt.AlignHCenter
+                            //% "Setup node connectivity"
+                            text: qsTrId("start-node-title")
+                            color: Style.content_main
+                            font.pixelSize: 36
+                        }
+                    }
+
+                    Column {
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+                        Layout.preferredWidth: 440
+                        topPadding: 50
+
+                        clip: true
+
+                        spacing: 15
+                        ButtonGroup {
+                            id: nodePreferencesGroup
+                        }
+
+                        CustomRadioButton {
+                            id: localNodeButton
+                            //% "Full Node Wallet (recommended)"
+                            text: qsTrId("start-node-integrated-radio")
+                            ButtonGroup.group: nodePreferencesGroup
+                            font.pixelSize: 14
+                            checked: true
+                        }
+                        Column {
+                            id: localNodePanel
+                            visible: localNodeButton.checked
+                            width: parent.width
+                            leftPadding: 34
+
+                            spacing: 10
+
+                            SFText {
+                                //% "Enter port to listen"
+                                text: qsTrId("start-node-port-label")
+                                color: Style.content_main
+                                font.pixelSize: 14
+                                font.styleName: "Bold"; font.weight: Font.Bold
+                            }
+
+                            SFTextInput {
+                                id:portInput
+                                width: parent.width
+
+                                font.pixelSize: 14
+                                color: Style.content_main
+                                text: viewModel.defaultPortToListen()
+                                validator: RegExpValidator { regExp: /^\d{1,5}$/ }
+                                onTextChanged: if (portInput.text.length > 0) portError.text = ""
+                            }
+                            SFText {
+                                id: portError
+                                color: Style.validator_error
+                                font.pixelSize: 14
+                            }
+
+
+                        //    SFText {
+                        //        //% "Enter port to listen"
+                        //        text: "Enter Assetchain Asset Ticker"
+                        //        color: Style.content_main
+                        //        font.pixelSize: 14
+                        //        font.styleName: "Bold"; font.weight: Font.Bold
+                        //    }
+
+                        //    SFTextInput {
+                        //        id:cac_symbolInput
+                        //        width: parent.width
+
+                        //        font.pixelSize: 14
+                        //        color: Style.content_main
+                        //        text: viewModel.defaultcac_symbol()
+
+
+                        //    }
+
+
+
+                           FeeSlider {
+                               id: miningInput
+                               precision: 0
+                               showTicks: true
+                               width: parent.width
+                               visible: false
+                               value: 0
+                               to: {viewModel.coreAmount()}
+                               stepSize: 1
+                           }
+
+                            RowLayout {
+                                width: parent.width
+                                spacing: 10
+
+                                SFText {
+                                    //% "Peer"
+                                    text: qsTrId("start-node-peer-label")
+                                    color: Style.content_main
+                                    font.pixelSize: 14
+                                    font.styleName: "Bold"; font.weight: Font.Bold
+                                }
+
+                                SFTextInput {
+                                    id: localNodePeer
+                                    Layout.fillWidth: true
+                                    activeFocusOnTab: true
+                                    font.pixelSize: 12
+                                    color: Style.content_main
+                                    text: viewModel.chooseRandomNode()
+                                    validator: RegExpValidator { regExp: /^(\s|\x180E)*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|([\w.-]+(?:\.[\w\.-]+)+))(:([0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(\s|\x180E)*$/ }
+                                    onTextChanged: if (peerError.text.length > 0) peerError.text = ""
+                                }
+                            }
+                            SFText {
+                                id: peerError
+                                color: Style.validator_error
+                                font.pixelSize: 14
+                            }
+                        }
+
+                        CustomRadioButton {
+                            id: randomNodeButton
+                            //% "Light Wallet "
+                            text: qsTrId("start-node-random-radio")
+                            ButtonGroup.group: nodePreferencesGroup
+                            font.pixelSize: 14
+                            enabled: viewModel.isRecoveryMode == false
+                        }
+                        Row {
+                            width: parent.width
+                            spacing: 10
+                            CustomRadioButton {
+                                id: remoteNodeButton
+                                //% "p2p connect (for developers)"
+                                text: qsTrId("start-node-remote-radio")
+                                ButtonGroup.group: nodePreferencesGroup
+                                font.pixelSize: 14
+                                enabled: viewModel.isRecoveryMode == false
+                            }
+                            SFTextInput {
+                                id:remoteNodeAddrInput
+                                visible: remoteNodeButton.checked
+                                width: parent.width - parent.spacing - remoteNodeButton.width
+                                font.pixelSize: 14
+                                color: Style.content_main
+                                text: viewModel.defaultRemoteNodeAddr()
+                                validator: RegExpValidator { regExp: /^(\s|\x180E)*((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|([\w.-]+(?:\.[\w\.-]+)+))(:([0-9]|[1-9][0-9]{1,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?(\s|\x180E)*$/ }
+                                onTextChanged: if (remoteNodeAddrInput.text.length > 0) remoteNodeAddrError.text = ""
+                                bottomPadding: 8 // TODO add default value of this item to controls
+                            }
+                        }
+                        Column {
+                            id: remoteNodePanel
+                            visible: remoteNodeButton.checked
+                            width: parent.width
+                            leftPadding: 40
+
+                            spacing: 10
+
+                            SFText {
+                                id: remoteNodeAddrError
+                                color: Style.validator_error
+                                font.pixelSize: 14
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 20
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+
+                        CustomButton {
+                            //% "back"
+                            text: qsTrId("start-back-button")
+                            icon.source: "qrc:/assets/icon-back.svg"
+                            onClicked: startWizzardView.pop();
+                        }
+
+                        PrimaryButton {
+                            text: viewModel.isRecoveryMode ?
+                                //% "restore wallet"
+                                qsTrId("start-finish-button-restore") :
+                                //% "start using your wallet"
+                                qsTrId("start-finish-button");
+                            icon.source: viewModel.isRecoveryMode ? "qrc:/assets/icon-restore-blue.svg" : "qrc:/assets/icon-next-blue.svg"
+                            enabled: nodePreferencesGroup.checkState != Qt.Unchecked
+                            onClicked:{
+                                if (localNodeButton.checked) {
+                                    if (portInput.text.trim().length === 0) {
+                                        //% "Please, specify port number to listen on"
+                                        portError.text = qsTrId("start-node-port-empty-error");
+                                        return;
+                                    }
+                                    var effectivePort = parseInt(portInput.text.trim());
+                                    if (effectivePort > 65535 || effectivePort < 1) {
+                                        //% "Port must be a number between 1 and 65535"
+                                        portError.text = qsTrId("start-node-port-value-error");
+                                        return;
+                                    }
+                                    if (localNodePeer.text.trim().length === 0) {
+                                        //% "Please, specify peer"
+                                        peerError.text = qsTrId("start-node-peer-empty-error");
+                                        return;
+                                    }
+                                    if (!localNodePeer.acceptableInput) {
+                                        //% "Please, specify correct peer"
+                                        peerError.text = qsTrId("start-node-peer-error");
+                                        return;
+                                    }
+
+                                  //  viewModel.setupLocalNode(parseInt(portInput.text), parseInt(miningInput.value), cac_symbolInput.text,  localNodePeer.text);
+                                  viewModel.setupLocalNode(parseInt(portInput.text), parseInt(miningInput.value), localNodePeer.text);
+                                }
+                                else if (remoteNodeButton.checked) {
+                                    if (remoteNodeAddrInput.text.trim().length === 0) {
+                                        //% "Please, specify address of the remote node"
+                                        remoteNodeAddrError.text = qsTrId("start-node-empty-error");
+                                        return;
+                                    }
+                                    viewModel.setupRemoteNode(remoteNodeAddrInput.text.trim());
+                                }
+                                else if (randomNodeButton.checked) {
+                                    viewModel.setupRandomNode();
+                                }
+
+                                if (viewModel.createWallet()) {
+                                    startWizzardView.push("qrc:/loading.qml", {"isRecoveryMode" : viewModel.isRecoveryMode, "isCreating" : true, "cancelCallback": startWizzardView.pop});
+                                }
+                                else {
+                                    // TODO(alex.starun): error message if wallet not created
+                                }
+                            }
+                        }
+                    }
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                        Layout.maximumHeight: 143
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: choose
+            Rectangle
+            {
+
+                property Item defaultFocusItem: openPassword
+
+                // default methods for open wallet, can be changed for unlock wallet
+                property var openWallet: function (pass) {
+                    return viewModel.openWallet(pass);
+                }
+                property var loadWallet: function () {
+
+                    root.parent.setSource("qrc:/loading.qml", {"isRecoveryMode" : false, "isCreating" : false});
+                }
+
+                property var checkCapsLockOnActivation: function () {
+                    viewModel.checkCapsLock();
+                    // OSX hack, to handle capslock shutdonw
+                    if (Qt.platform.os == "osx" && viewModel.isCapsLockOn) {
+                        var timer = Qt.createQmlObject('import QtQml 2.11; Timer {}', open, "osxCapsTimer");
+                        timer.interval = 500;
+                        timer.repeat = true;
+                        timer.triggered.connect(viewModel.checkCapsLock);
+                        timer.start();
+                    }
+                }
+                Component.onCompleted: root.parent.activated.connect(checkCapsLockOnActivation)
+                Component.onDestruction: root.parent.activated.disconnect(checkCapsLockOnActivation)
+
+                color: Style.background_main
+
+                Keys.onPressed: {
+                    // Linux hack, X11 return caps state with delay
+                    if (Qt.platform.os == "linux") {
+                        var timer = Qt.createQmlObject('import QtQml 2.11; Timer {}', open, "linuxCapsTimer");
+                        timer.interval = 500;
+                        timer.repeat = false;
+                        timer.triggered.connect(viewModel.checkCapsLock);
+                        timer.start();
+                    } else {
+                        viewModel.checkCapsLock();
+                    }
+                }
+                Keys.onReleased: {
+                    // OSX hack, to handle capslock shutdonw
+                    if (Qt.platform.os == "osx") {
+                        viewModel.checkCapsLock();
+                    }
+                }
+
+                Image {
+                    fillMode: Image.PreserveAspectCrop
+                    anchors.fill: parent
+                    source: "qrc:/assets/bg.svg"
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: 100
+                        Layout.maximumHeight: 280
+                    }
+
+                    Loader {
+                        sourceComponent: logoComponent
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 200//187
+                        Layout.maximumHeight: 269
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                        Layout.maximumHeight: 89
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 18
+                        spacing: 19
+
+                        CustomButton {
+                            palette.buttonText: Style.new_white
+                            palette.button: Style.new_red
+                            anchors.verticalCenter: parent.verticalCenter
+                            id: btnCurrentWallet1
+                            //% "Light wallet"
+
+                            text: "Light wallet"
+                            icon.source: "qrc:/assets/light.svg"
+                            onClicked: {
+                            viewModel.setupRandomNode();
+                            startWizzardView.push(openl);
+                            }
+                        }
+
+                        PrimaryButton {
+                        palette.buttonText: Style.content_opposite
+                        palette.button: Style.White
+                            anchors.verticalCenter: parent.verticalCenter
+                            id: btnCurrentWallet2
+                            //% "show my wallet"
+                            text: "Full node wallet"
+                            icon.source: "qrc:/assets/icon-wallet-small.svg"
+                            onClicked: {
+                            viewModel.setupLocalNode(parseInt(10005), parseInt(0), "64.225.32.192:10150");
+                            startWizzardView.push(open);
+                            }
+                        }
+
+                                    }
+
+
+
+
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 20
+                        Layout.maximumHeight: 20
+                    }
+                    Item {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 36
+                        Layout.maximumHeight: 36
+                        Rectangle {
+                            id: capsWarning
+                            anchors.centerIn: parent
+                            color: Style.caps_warning
+                            width: 152
+                            height: 36
+                            radius: 6
+                            opacity: 0.2
+                            visible: viewModel.isCapsLockOn
+                        }
+                        SFText {
+                            anchors.centerIn: capsWarning
+                            horizontalAlignment: Qt.AlignHCenter
+                            verticalAlignment: Qt.AlignVCenter
+                            //% "Caps lock is on!"
+                            text: qsTrId("start-open-caps-warning")
+                            color: Style.content_main
+                            font.pixelSize: 14
+                            visible: viewModel.isCapsLockOn
+                        }
+                    }
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 9
+                        Layout.maximumHeight: 6
+                    }
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+                        SFText {
+                            Layout.alignment: Qt.AlignHCenter
+                            //% "Restore wallet or create a new one"
+                            text: qsTrId("start-open-restore-link")
+                            color: Style.new_white
+                            font.pixelSize: 14
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    confirmChangeWalletDialog.open();
+                                }
+                                hoverEnabled: true
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                    }
+
+                    Column {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 400
+                        Layout.topMargin: 50
+                        spacing: 2
+
+                        SFText {
+                            //% "Password"
+                            visible: false
+                            text: qsTrId("start-pwd-label")
+                            color: Style.content_main
+                            font.pixelSize: 14
+                            font.styleName: "Bold"; font.weight: Font.Bold
+                        }
+
+                        SFTextInput {
+                            id: openPassword
+                            visible: false
+                            width: parent.width
+                            focus: true
+                            activeFocusOnTab: true
+                            font.pixelSize: 14
+                            color: Style.content_main
+                            echoMode: TextInput.Password
+                            onAccepted: btnCurrentWallet.clicked()
+                            onTextChanged: if (openPassword.text.length > 0) openPasswordError.text = ""
+                        }
+
+                        SFText {
+                            height: 16
+                            visible: false
+                            width: parent.width
+                            id: openPasswordError
+                            color: Style.validator_error
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    ConfirmationDialog {
+                        id: confirmChangeWalletDialog
+                        //% "proceed"
+                        okButtonText: qsTrId("start-open-change-wallet-confirm")
+                        okButtonIconSource: "qrc:/assets/icon-done.svg"
+                        cancelButtonIconSource: "qrc:/assets/icon-cancel-white.svg"
+                        cancelVisible: true
+                        width: 460
+                        height: 195
+                        contentItem: Column {
+                            anchors.fill: parent
+                            anchors.margins: 30
+                            spacing: 20
+
+                            SFText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                horizontalAlignment: Qt.AlignHCenter
+                                //% "Restore wallet or create new one"
+                                text: qsTrId("start-open-change-wallet-title")
+                                color: Style.content_main
+                                font.pixelSize: 18
+                                font.styleName: "Bold"
+                                font.weight: Font.Bold
+                            }
+
+                            SFText {
+                                horizontalAlignment : Text.AlignHCenter
+                                width: parent.width
+                                //% "If you'll restore a wallet all transaction history and addresses will be lost."
+                                text: qsTrId("start-open-change-wallet-message")
+                                color: Style.content_main
+                                font.pixelSize: 14
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                        onAccepted: {
+                            viewModel.isRecoveryMode = false;
+                            startWizzardView.push(start);
+                        }
+                    }
+                    }
+                    }
+                    }
+
+        Component {
+            id: open
+            Rectangle
+            {
+                property Item defaultFocusItem: openPassword
+
+                // default methods for open wallet, can be changed for unlock wallet
+                property var openWallet: function (pass) {
+                    return viewModel.openWallet(pass);
+                }
+                property var loadWallet: function () {
+
+                    root.parent.setSource("qrc:/loading.qml", {"isRecoveryMode" : false, "isCreating" : false});
+                }
+
+                property var checkCapsLockOnActivation: function () {
+                    viewModel.checkCapsLock();
+                    // OSX hack, to handle capslock shutdonw
+                    if (Qt.platform.os == "osx" && viewModel.isCapsLockOn) {
+                        var timer = Qt.createQmlObject('import QtQml 2.11; Timer {}', open, "osxCapsTimer");
+                        timer.interval = 500;
+                        timer.repeat = true;
+                        timer.triggered.connect(viewModel.checkCapsLock);
+                        timer.start();
+                    }
+                }
+                Component.onCompleted: root.parent.activated.connect(checkCapsLockOnActivation)
+                Component.onDestruction: root.parent.activated.disconnect(checkCapsLockOnActivation)
+
+                color: Style.background_main
+
+                Keys.onPressed: {
+                    // Linux hack, X11 return caps state with delay
+                    if (Qt.platform.os == "linux") {
+                        var timer = Qt.createQmlObject('import QtQml 2.11; Timer {}', open, "linuxCapsTimer");
+                        timer.interval = 500;
+                        timer.repeat = false;
+                        timer.triggered.connect(viewModel.checkCapsLock);
+                        timer.start();
+                    } else {
+                        viewModel.checkCapsLock();
+                    }
+                }
+                Keys.onReleased: {
+                    // OSX hack, to handle capslock shutdonw
+                    if (Qt.platform.os == "osx") {
+                        viewModel.checkCapsLock();
+                    }
+                }
+
+                Image {
+                    fillMode: Image.PreserveAspectCrop
+                    anchors.fill: parent
+                    source: "qrc:/assets/bg.svg"
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: 100
+                        Layout.maximumHeight: 280
+                    }
+
+                    Loader {
+                        sourceComponent: logoComponent
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 200//187
+                        Layout.maximumHeight: 269
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                        Layout.maximumHeight: 89
+                    }
+
+                    Column {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 400
+                        Layout.topMargin: 50
+                        spacing: 2
+
+                        SFText {
+                            //% "Password"
+                            text: qsTrId("start-pwd-label")
+                            color: Style.content_main
+                            font.pixelSize: 14
+                            font.styleName: "Bold"; font.weight: Font.Bold
+                        }
+
+                        SFTextInput {
+                            id: openPassword
+                            width: parent.width
+                            focus: true
+                            activeFocusOnTab: true
+                            font.pixelSize: 14
+                            color: Style.content_main
+                            echoMode: TextInput.Password
+                            onAccepted: btnCurrentWallet.clicked()
+                            onTextChanged: if (openPassword.text.length > 0) openPasswordError.text = ""
+                        }
+
+                        SFText {
+                            height: 16
+                            width: parent.width
+                            id: openPasswordError
+                            color: Style.validator_error
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 18
+                        spacing: 19
+
+                        PrimaryButton {
+                        palette.buttonText: Style.new_white
+                        palette.button: Style.new_red
+                            anchors.verticalCenter: parent.verticalCenter
+                            id: btnCurrentWallet
+                            //% "show my wallet"
+                            text: "Connect"
+                            icon.source: "qrc:/assets/icon-wallet-small.svg"
+                            onClicked: {
+                                if(openPassword.text.length == 0)
+                                {
+                                    //% "Please, enter password"
+                                    openPasswordError.text = qsTrId("open-pwd-empty");
+                                }
+                                else
+                                {
+                                    if(!openWallet(openPassword.text))
+                                    {
+                                        //% "Invalid password provided."
+                                        openPasswordError.text = qsTrId("open-pwd-fail");
+                                    }
+                                    else
+                                    {
+
+                                        loadWallet();
+
+                                    }
+                                }
+                            }
+                        }
+
+                                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 20
+                        Layout.maximumHeight: 20
+                    }
+                    Item {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 36
+                        Layout.maximumHeight: 36
+                        Rectangle {
+                            id: capsWarning
+                            anchors.centerIn: parent
+                            color: Style.caps_warning
+                            width: 152
+                            height: 36
+                            radius: 6
+                            opacity: 0.2
+                            visible: viewModel.isCapsLockOn
+                        }
+                        SFText {
+                            anchors.centerIn: capsWarning
+                            horizontalAlignment: Qt.AlignHCenter
+                            verticalAlignment: Qt.AlignVCenter
+                            //% "Caps lock is on!"
+                            text: qsTrId("start-open-caps-warning")
+                            color: Style.content_main
+                            font.pixelSize: 14
+                            visible: viewModel.isCapsLockOn
+                        }
+                    }
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 9
+                        Layout.maximumHeight: 6
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+                        SFText {
+                            Layout.alignment: Qt.AlignHCenter
+                            //% "Restore wallet or create a new one"
+                            text: qsTrId("start-open-restore-link")
+                            color: Style.new_white
+                            font.pixelSize: 14
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    confirmChangeWalletDialog.open();
+                                }
+                                hoverEnabled: true
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                    }
+
+                    ConfirmationDialog {
+                        id: confirmChangeWalletDialog
+                        //% "proceed"
+                        okButtonText: qsTrId("start-open-change-wallet-confirm")
+                        okButtonIconSource: "qrc:/assets/icon-done.svg"
+                        cancelButtonIconSource: "qrc:/assets/icon-cancel-white.svg"
+                        cancelVisible: true
+                        width: 460
+                        height: 195
+                        contentItem: Column {
+                            anchors.fill: parent
+                            anchors.margins: 30
+                            spacing: 20
+
+                            SFText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                horizontalAlignment: Qt.AlignHCenter
+                                //% "Restore wallet or create new one"
+                                text: qsTrId("start-open-change-wallet-title")
+                                color: Style.content_main
+                                font.pixelSize: 18
+                                font.styleName: "Bold"
+                                font.weight: Font.Bold
+                            }
+
+                            SFText {
+                                horizontalAlignment : Text.AlignHCenter
+                                width: parent.width
+                                //% "If you'll restore a wallet all transaction history and addresses will be lost."
+                                text: qsTrId("start-open-change-wallet-message")
+                                color: Style.content_main
+                                font.pixelSize: 14
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                        onAccepted: {
+                            viewModel.isRecoveryMode = false;
+                            startWizzardView.push(start);
+                        }
+                    }
+                }
+            }
+        }
+
+        Component {
+            id: openl
+            Rectangle
+            {
+                property Item defaultFocusItem: openPassword
+
+                // default methods for open wallet, can be changed for unlock wallet
+                property var openWallet: function (pass) {
+                    return viewModel.openWallet(pass);
+                }
+                property var loadWallet: function () {
+
+                    root.parent.setSource("qrc:/loading.qml", {"isRecoveryMode" : false, "isCreating" : false});
+                }
+
+                property var checkCapsLockOnActivation: function () {
+                    viewModel.checkCapsLock();
+                    // OSX hack, to handle capslock shutdonw
+                    if (Qt.platform.os == "osx" && viewModel.isCapsLockOn) {
+                        var timer = Qt.createQmlObject('import QtQml 2.11; Timer {}', open, "osxCapsTimer");
+                        timer.interval = 500;
+                        timer.repeat = true;
+                        timer.triggered.connect(viewModel.checkCapsLock);
+                        timer.start();
+                    }
+                }
+                Component.onCompleted: root.parent.activated.connect(checkCapsLockOnActivation)
+                Component.onDestruction: root.parent.activated.disconnect(checkCapsLockOnActivation)
+
+                color: Style.background_main
+
+                Keys.onPressed: {
+                    // Linux hack, X11 return caps state with delay
+                    if (Qt.platform.os == "linux") {
+                        var timer = Qt.createQmlObject('import QtQml 2.11; Timer {}', open, "linuxCapsTimer");
+                        timer.interval = 500;
+                        timer.repeat = false;
+                        timer.triggered.connect(viewModel.checkCapsLock);
+                        timer.start();
+                    } else {
+                        viewModel.checkCapsLock();
+                    }
+                }
+                Keys.onReleased: {
+                    // OSX hack, to handle capslock shutdonw
+                    if (Qt.platform.os == "osx") {
+                        viewModel.checkCapsLock();
+                    }
+                }
+
+                Image {
+                    fillMode: Image.PreserveAspectCrop
+                    anchors.fill: parent
+                    source: "qrc:/assets/bg.svg"
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 0
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.fillWidth: true
+                        Layout.minimumHeight: 100
+                        Layout.maximumHeight: 280
+                    }
+
+                    Loader {
+                        sourceComponent: logoComponent
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 200//187
+                        Layout.maximumHeight: 269
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 30
+                        Layout.maximumHeight: 89
+                    }
+
+                    Column {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.preferredWidth: 400
+                        Layout.topMargin: 50
+                        spacing: 2
+
+                        SFText {
+                            //% "Password"
+                            text: qsTrId("start-pwd-label")
+                            color: Style.content_main
+                            font.pixelSize: 14
+                            font.styleName: "Bold"; font.weight: Font.Bold
+                        }
+
+                        SFTextInput {
+                            id: openPassword
+                            width: parent.width
+                            focus: true
+                            activeFocusOnTab: true
+                            font.pixelSize: 14
+                            color: Style.content_main
+                            echoMode: TextInput.Password
+                            onAccepted: btnCurrentWallet.clicked()
+                            onTextChanged: if (openPassword.text.length > 0) openPasswordError.text = ""
+                        }
+
+                        SFText {
+                            height: 16
+                            width: parent.width
+                            id: openPasswordError
+                            color: Style.validator_error
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.topMargin: 18
+                        spacing: 19
+
+                        CustomButton {
+                            palette.buttonText: Style.new_white
+                            palette.button: Style.new_red
+                            anchors.verticalCenter: parent.verticalCenter
+                            id: btnCurrentWallet
+                            //% "show my wallet"
+                            text: "Connect"
+                            icon.source: "qrc:/assets/icon-wallet-small.svg"
+                            onClicked: {
+                                if(openPassword.text.length == 0)
+                                {
+                                    //% "Please, enter password"
+                                    openPasswordError.text = qsTrId("open-pwd-empty");
+                                }
+                                else
+                                {
+                                    if(!openWallet(openPassword.text))
+                                    {
+                                        //% "Invalid password provided."
+                                        openPasswordError.text = qsTrId("open-pwd-fail");
+                                    }
+                                    else
+                                    {
+
+                                        loadWallet();
+
+                                    }
+                                }
+                            }
+                        }
+
+                                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 20
+                        Layout.maximumHeight: 20
+                    }
+                    Item {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 36
+                        Layout.maximumHeight: 36
+                        Rectangle {
+                            id: capsWarning
+                            anchors.centerIn: parent
+                            color: Style.caps_warning
+                            width: 152
+                            height: 36
+                            radius: 6
+                            opacity: 0.2
+                            visible: viewModel.isCapsLockOn
+                        }
+                        SFText {
+                            anchors.centerIn: capsWarning
+                            horizontalAlignment: Qt.AlignHCenter
+                            verticalAlignment: Qt.AlignVCenter
+                            //% "Caps lock is on!"
+                            text: qsTrId("start-open-caps-warning")
+                            color: Style.content_main
+                            font.pixelSize: 14
+                            visible: viewModel.isCapsLockOn
+                        }
+                    }
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 9
+                        Layout.maximumHeight: 6
+                    }
+
+                    Row {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 30
+                        SFText {
+                            Layout.alignment: Qt.AlignHCenter
+                            //% "Restore wallet or create a new one"
+                            text: qsTrId("start-open-restore-link")
+                            color: Style.new_white
+                            font.pixelSize: 14
+                            MouseArea {
+                                anchors.fill: parent
+                                acceptedButtons: Qt.LeftButton
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    confirmChangeWalletDialog.open();
+                                }
+                                hoverEnabled: true
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 67
+                    }
+
+                    ConfirmationDialog {
+                        id: confirmChangeWalletDialog
+                        //% "proceed"
+                        okButtonText: qsTrId("start-open-change-wallet-confirm")
+                        okButtonIconSource: "qrc:/assets/icon-done.svg"
+                        cancelButtonIconSource: "qrc:/assets/icon-cancel-white.svg"
+                        cancelVisible: true
+                        width: 460
+                        height: 195
+                        contentItem: Column {
+                            anchors.fill: parent
+                            anchors.margins: 30
+                            spacing: 20
+
+                            SFText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                horizontalAlignment: Qt.AlignHCenter
+                                //% "Restore wallet or create new one"
+                                text: qsTrId("start-open-change-wallet-title")
+                                color: Style.content_main
+                                font.pixelSize: 18
+                                font.styleName: "Bold"
+                                font.weight: Font.Bold
+                            }
+
+                            SFText {
+                                horizontalAlignment : Text.AlignHCenter
+                                width: parent.width
+                                //% "If you'll restore a wallet all transaction history and addresses will be lost."
+                                text: qsTrId("start-open-change-wallet-message")
+                                color: Style.content_main
+                                font.pixelSize: 14
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                        onAccepted: {
+                            viewModel.isRecoveryMode = false;
+                            startWizzardView.push(start);
+                        }
+                    }
+                }
+            }
+        }
+
+        Component.onCompleted: {
+            if (isLockedMode) {
+                startWizzardView.push(open, { "openWallet": function (pass) { return viewModel.checkWalletPassword(pass); },
+                                              "loadWallet": function () { root.parent.setSource("qrc:/main.qml"); } });
+            }
+            else if (viewModel.walletExists) {
+                startWizzardView.push(choose);
+            }
+            else if (viewModel.isFindExistingWalletDB())
+            {
+                startWizzardView.push(migrate);
+            }
+            else {
+                startWizzardView.push(start);
+            }
+        }
+    }
+}

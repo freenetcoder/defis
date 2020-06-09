@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 24.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.0" id="Слой_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 784 548" enable-background="new 0 0 784 548" xml:space="preserve">
+<title>Group</title>
+<desc>Created with Sketch.</desc>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="108.2976" y1="274" x2="340.124" y2="274">
+	<stop  offset="0" style="stop-color:#585858"/>
+	<stop  offset="0.1742" style="stop-color:#414141"/>
+	<stop  offset="0.4571" style="stop-color:#212121"/>
+	<stop  offset="0.695" style="stop-color:#0D0D0D"/>
+	<stop  offset="0.8575" style="stop-color:#060606"/>
+</linearGradient>
+<path fill="url(#SVGID_1_)" stroke="#E23A00" stroke-width="7" stroke-miterlimit="10" d="M338.6,161.6c2-2,2-5.4,0-7.5L286,101.5
+	c-2-2-5.4-2-7.5,0L109.8,270.3c-2,2-2,5.4,0,7.5l168.7,168.7c2,2,5.4,2,7.5,0l52.6-52.6c2-2,2-5.4,0-7.5L229.9,277.7
+	c-2-2-2-5.4,0-7.5L338.6,161.6L338.6,161.6z"/>
+<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="327.8778" y1="273.915" x2="675.7024" y2="273.915">
+	<stop  offset="0" style="stop-color:#585858"/>
+	<stop  offset="0.1742" style="stop-color:#414141"/>
+	<stop  offset="0.4571" style="stop-color:#212121"/>
+	<stop  offset="0.695" style="stop-color:#0D0D0D"/>
+	<stop  offset="0.8575" style="stop-color:#060606"/>
+</linearGradient>
+<path fill="url(#SVGID_2_)" stroke="#E23A00" stroke-width="7" stroke-miterlimit="10" d="M505.4,101.5c-2-2-5.4-2-7.5,0
+	L329.4,269.9c-2,2-2,5.4,0,7.5L382,330c2,2,5.4,2,7.5,0L498,221.4c2-2,5.4-2,7.5,0l48.6,48.6c2,2,2,5.4,0,7.5L445.4,386.3
+	c-2,2-2,5.4,0,7.5l52.6,52.6c2,2,5.4,2,7.5,0l168.7-168.7c2-2,2-5.4,0-7.5L505.4,101.5L505.4,101.5z"/>
+</svg>

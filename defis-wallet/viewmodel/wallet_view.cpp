@@ -1,0 +1,977 @@
+// Copyright 2018 The Beam Team / Copyright 2019 The Grimm Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "wallet_view.h"
+
+#include <iomanip>
+#include "ui_helpers.h"
+#include <QApplication>
+#include <QClipboard>
+#include "model/app_model.h"
+#include "qrcode/QRCodeGenerator.h"
+#include <QtGui/qimage.h>
+#include <QtCore/qbuffer.h>
+#include <QUrlQuery>
+#include "model/qr.h"
+#include "utility/helpers.h"
+
+using namespace grimm;
+using namespace grimm::wallet;
+using namespace std;
+using namespace grimmui;
+
+namespace
+{
+    const int kDefaultFeeInCentum = 10;
+    const int kFeeInCentum_Fork1 = 100;
+
+    template<typename T>
+    bool compareTx(const T& lf, const T& rt, Qt::SortOrder sortOrder)
+    {
+        if (sortOrder == Qt::DescendingOrder)
+            return lf > rt;
+        return lf < rt;
+    }
+}
+
+TxObject::TxObject(QObject* parent /*= nullptr*/)
+    : QObject(parent)
+{
+
+}
+
+TxObject::TxObject(const TxDescription& tx, QObject* parent/* = nullptr*/)
+    : QObject(parent)
+    , m_tx(tx)
+{
+    auto kernelID = QString::fromStdString(to_hex(m_tx.m_kernelID.m_pData, m_tx.m_kernelID.nBytes));
+    setKernelID(kernelID);
+}
+
+bool TxObject::income() const
+{
+    return m_tx.m_sender == false;
+}
+
+QString TxObject::date() const
+{
+    return toString(m_tx.m_createTime);
+}
+
+QString TxObject::user() const
+{
+    return toString(m_tx.m_peerId);
+}
+
+QString TxObject::userName() const
+{
+    return m_userName;
+}
+
+QString TxObject::displayName() const
+{
+    return m_displayName;
+}
+
+QString TxObject::comment() const
+{
+    string str{ m_tx.m_message.begin(), m_tx.m_message.end() };
+
+    return QString(str.c_str()).trimmed();
+}
+
+QString TxObject::amount() const
+{
+    return GrimmToString(m_tx.m_amount);
+}
+
+QString TxObject::change() const
+{
+    if (m_tx.m_change)
+    {
+        return GrimmToString(m_tx.m_change);
+    }
+    return QString{};
+}
+
+QString TxObject::status() const
+{
+    return m_tx.getStatusString().c_str();
+}
+
+bool TxObject::canCancel() const
+{
+    return m_tx.canCancel();
+}
+
+bool TxObject::canDelete() const
+{
+    return m_tx.canDelete();
+}
+
+void TxObject::setUserName(const QString& name)
+{
+    if (m_userName != name)
+    {
+        m_userName = name;
+        emit displayNameChanged();
+    }
+}
+
+void TxObject::setDisplayName(const QString& name)
+{
+    if (m_displayName != name)
+    {
+        m_displayName = name;
+        emit displayNameChanged();
+    }
+}
+
+grimm::wallet::WalletID TxObject::peerId() const
+{
+    return m_tx.m_peerId;
+}
+
+QString TxObject::getSendingAddress() const
+{
+    if (m_tx.m_sender)
+    {
+        return toString(m_tx.m_myId);
+    }
+    return user();
+}
+
+QString TxObject::getReceivingAddress() const
+{
+    if (m_tx.m_sender)
+    {
+        return user();
+    }
+    return toString(m_tx.m_myId);
+}
+
+QString TxObject::getFee() const
+{
+    if (m_tx.m_fee)
+    {
+        return GrimmToString(m_tx.m_fee);
+    }
+    return QString{};
+}
+
+const grimm::wallet::TxDescription& TxObject::getTxDescription() const
+{
+    return m_tx;
+}
+
+void TxObject::setStatus(grimm::wallet::TxStatus status)
+{
+    if (m_tx.m_status != status)
+    {
+        m_tx.m_status = status;
+        emit statusChanged();
+    }
+}
+
+QString TxObject::getKernelID() const
+{
+    return m_kernelID;
+}
+
+void TxObject::setKernelID(const QString& value)
+{
+    if (m_kernelID != value)
+    {
+        m_kernelID = value;
+        emit kernelIDChanged();
+    }
+}
+
+QString TxObject::getTransactionID() const
+{
+    return QString::fromStdString(to_hex(m_tx.m_txId.data(), m_tx.m_txId.size()));
+}
+
+QString TxObject::getFailureReason() const
+{
+    if (getTxDescription().m_status == TxStatus::Failed)
+    {
+        QString Reasons[] =
+        {
+            //% "Unexpected reason, please send wallet logs to Grimm support"
+            qtTrId("tx-failture-undefined"),
+            //% "Transaction cancelled"
+            qtTrId("tx-failture-cancelled"),
+            //% "Receiver signature in not valid, please send wallet logs to Grimm support"
+            qtTrId("tx-failture-receiver-signature-invalid"),
+            //% "Failed to register transaction with the blockchain, see node logs for details"
+            qtTrId("tx-failture-not-registered-in-blockchain"),
+            //% "Transaction is not valid, please send wallet logs to Grimm support"
+            qtTrId("tx-failture-not-valid"),
+            //% "Invalid kernel proof provided"
+            qtTrId("tx-failture-kernel-invalid"),
+            //% "Failed to send Transaction parameters"
+            qtTrId("tx-failture-parameters-not-sended"),
+            //% "No inputs"
+            qtTrId("tx-failture-no-inputs"),
+            //% "Address is expired"
+            qtTrId("tx-failture-addr-expired"),
+            //% "Failed to get transaction parameters"
+            qtTrId("tx-failture-parameters-not-readed"),
+            //% "Transaction timed out"
+            qtTrId("tx-failture-time-out"),
+            //% "Payment not signed by the receiver, please send wallet logs to Grimm support"
+            qtTrId("tx-failture-not-signed-by-receiver"),
+            //% "Kernel maximum height is too high"
+            qtTrId("tx-failture-max-height-to-high"),
+            //% "Transaction has invalid state"
+            qtTrId("tx-failture-invalid-state")
+        };
+
+        return Reasons[getTxDescription().m_failureReason];
+    }
+
+    return QString();
+}
+
+void TxObject::setFailureReason(grimm::wallet::TxFailureReason reason)
+{
+    if (m_tx.m_failureReason != reason)
+    {
+        m_tx.m_failureReason = reason;
+        emit failureReasonChanged();
+    }
+}
+
+bool TxObject::hasPaymentProof() const
+{
+    return !income() && m_tx.m_status == TxStatus::Completed;
+}
+
+void TxObject::update(const grimm::wallet::TxDescription& tx)
+{
+    setStatus(tx.m_status);
+    auto kernelID = QString::fromStdString(to_hex(tx.m_kernelID.m_pData, tx.m_kernelID.nBytes));
+    setKernelID(kernelID);
+    setFailureReason(tx.m_failureReason);
+}
+
+bool TxObject::inProgress() const
+{
+    switch (m_tx.m_status)
+    {
+    case TxStatus::Pending:
+    case TxStatus::InProgress:
+    case TxStatus::Registering:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool TxObject::isCompleted() const
+{
+    return m_tx.m_status == TxStatus::Completed;
+}
+
+bool TxObject::isSelfTx() const
+{
+    return m_tx.m_selfTx;
+}
+
+PaymentInfoItem* TxObject::getPaymentInfo()
+{
+    return new MyPaymentInfoItem(m_tx.m_txId, this);
+}
+
+//////////
+// PaymentInfoItem
+PaymentInfoItem::PaymentInfoItem(QObject* parent /*= nullptr*/)
+    : QObject(parent)
+{
+
+}
+
+QString PaymentInfoItem::getSender() const
+{
+    return toString(m_paymentInfo.m_Sender);
+}
+
+QString PaymentInfoItem::getReceiver() const
+{
+    return toString(m_paymentInfo.m_Receiver);
+}
+
+QString PaymentInfoItem::getAmount() const
+{
+    return GrimmToString(m_paymentInfo.m_Amount);
+}
+
+QString PaymentInfoItem::getKernelID() const
+{
+    return toString(m_paymentInfo.m_KernelID);
+}
+
+bool PaymentInfoItem::isValid() const
+{
+    return m_paymentInfo.IsValid();
+}
+
+QString PaymentInfoItem::getPaymentProof() const
+{
+    return m_paymentProof;
+}
+
+void PaymentInfoItem::setPaymentProof(const QString& value)
+{
+    if (m_paymentProof != value)
+    {
+        m_paymentProof = value;
+        try
+        {
+            m_paymentInfo = wallet::storage::PaymentInfo::FromByteBuffer(from_hex(m_paymentProof.toStdString()));
+            emit paymentProofChanged();
+        }
+        catch (...)
+        {
+            reset();
+        }
+    }
+}
+
+void PaymentInfoItem::reset()
+{
+    m_paymentInfo.Reset();
+    emit paymentProofChanged();
+}
+
+//////////
+// MyPaymentInfoItem
+MyPaymentInfoItem::MyPaymentInfoItem(const TxID& txID, QObject* parent/* = nullptr*/)
+    : PaymentInfoItem(parent)
+{
+    auto model = AppModel::getInstance()->getWallet();
+    connect(model.get(), SIGNAL(paymentProofExported(const grimm::wallet::TxID&, const QString&)), SLOT(onPaymentProofExported(const grimm::wallet::TxID&, const QString&)));
+    model->getAsync()->exportPaymentProof(txID);
+}
+
+void MyPaymentInfoItem::onPaymentProofExported(const grimm::wallet::TxID& txID, const QString& proof)
+{
+    setPaymentProof(proof);
+}
+
+
+//////////
+// WalletViewModel
+WalletViewModel::WalletViewModel()
+    : _model(*AppModel::getInstance()->getWallet())
+    , _settings(AppModel::getInstance()->getSettings())
+    , _status{ 0, 0, 0, 0, {0, 0, 0}, {} }
+    , _sendAmount("0")
+    , _amountForReceive(0.0)
+    , _feeCentumes("0")
+    , _change(0)
+    , _expires(0)
+    , _qr(std::make_unique<QR>())
+{
+
+    connect(&_model, SIGNAL(walletStatus(const grimm::wallet::WalletStatus&)), SLOT(onStatus(const grimm::wallet::WalletStatus&)));
+
+    connect(&_model, SIGNAL(txStatus(grimm::wallet::ChangeAction, const std::vector<grimm::wallet::TxDescription>&)),
+        SLOT(onTxStatus(grimm::wallet::ChangeAction, const std::vector<grimm::wallet::TxDescription>&)));
+
+    connect(&_model, SIGNAL(changeCalculated(grimm::Amount)),
+        SLOT(onChangeCalculated(grimm::Amount)));
+
+    connect(&_model, SIGNAL(changeCurrentWalletIDs(grimm::wallet::WalletID, grimm::wallet::WalletID)),
+        SLOT(onChangeCurrentWalletIDs(grimm::wallet::WalletID, grimm::wallet::WalletID)));
+
+    connect(&_model, SIGNAL(addressesChanged(bool, const std::vector<grimm::wallet::WalletAddress>&)),
+        SLOT(onAddresses(bool, const std::vector<grimm::wallet::WalletAddress>&)));
+
+    connect(&_model, SIGNAL(generatedNewAddress(const grimm::wallet::WalletAddress&)),
+        SLOT(onGeneratedNewAddress(const grimm::wallet::WalletAddress&)));
+
+    connect(&_model, SIGNAL(newAddressFailed()), SLOT(onNewAddressFailed()));
+
+    connect(&_model, SIGNAL(sendMoneyVerified()), SLOT(onSendMoneyVerified()));
+
+    connect(&_model, SIGNAL(cantSendToExpired()), SLOT(onCantSendToExpired()));
+
+    connect(_qr.get(), SIGNAL(qrDataChanged()), SLOT(onReceiverQRChanged()));
+
+    _model.getAsync()->getWalletStatus();
+}
+
+WalletViewModel::~WalletViewModel()
+{
+    disconnect(_qr.get(), SIGNAL(qrDataChanged()),
+               this, SLOT(onReceiverQRChanged()));
+    qDeleteAll(_txList);
+}
+
+void WalletViewModel::cancelTx(TxObject* pTxObject)
+{
+    if (pTxObject->canCancel())
+    {
+        _model.getAsync()->cancelTx(pTxObject->getTxDescription().m_txId);
+    }
+}
+
+void WalletViewModel::deleteTx(TxObject* pTxObject)
+{
+    if (pTxObject->canDelete())
+    {
+        _model.getAsync()->deleteTx(pTxObject->getTxDescription().m_txId);
+    }
+}
+
+void WalletViewModel::generateNewAddress()
+{
+    _newReceiverAddr = {};
+    _newReceiverName = "";
+
+    _model.getAsync()->generateNewAddress();
+}
+
+void WalletViewModel::saveNewAddress()
+{
+    _newReceiverAddr.m_label = _newReceiverName.toStdString();
+    if (_expires == 1)
+    {
+        _newReceiverAddr.m_duration = 0;
+    }
+
+    _model.getAsync()->saveAddress(_newReceiverAddr, true);
+}
+
+void WalletViewModel::copyToClipboard(const QString& text)
+{
+    QApplication::clipboard()->setText(text);
+}
+
+void WalletViewModel::onStatus(const grimm::wallet::WalletStatus& status)
+{
+    bool changed = false;
+
+    if (_status.available != status.available)
+    {
+        _status.available = status.available;
+
+        changed = true;
+
+        emit actualAvailableChanged();
+    }
+
+    if (_status.receiving != status.receiving)
+    {
+        _status.receiving = status.receiving;
+
+        changed = true;
+    }
+
+    if (_status.sending != status.sending)
+    {
+        _status.sending = status.sending;
+
+        changed = true;
+    }
+
+    if (_status.maturing != status.maturing)
+    {
+        _status.maturing = status.maturing;
+
+        changed = true;
+    }
+
+    if (_status.update.lastTime != status.update.lastTime)
+    {
+        _status.update.lastTime = status.update.lastTime;
+
+        changed = true;
+    }
+
+    if (changed)
+    {
+        emit stateChanged();
+    }
+}
+
+void WalletViewModel::onTxStatus(grimm::wallet::ChangeAction action, const std::vector<grimm::wallet::TxDescription>& items)
+{
+    QList<TxObject*> deletedObjects;
+    if (action == grimm::wallet::ChangeAction::Reset)
+    {
+        deletedObjects.swap(_txList);
+        _txList.clear();
+        for (const auto& item : items)
+        {
+            _txList.push_back(new TxObject(item));
+        }
+        sortTx();
+    }
+    else if (action == grimm::wallet::ChangeAction::Removed)
+    {
+        for (const auto& item : items)
+        {
+            auto it = find_if(_txList.begin(), _txList.end(), [&item](const auto& tx) {return item.m_txId == tx->getTxDescription().m_txId; });
+            if (it != _txList.end())
+            {
+                deletedObjects.push_back(*it);
+                _txList.erase(it);
+            }
+        }
+        emit transactionsChanged();
+    }
+    else if (action == grimm::wallet::ChangeAction::Updated)
+    {
+        auto txIt = _txList.begin();
+        auto txEnd = _txList.end();
+        for (const auto& item : items)
+        {
+            txIt = find_if(txIt, txEnd, [&item](const auto& tx) {return item.m_txId == tx->getTxDescription().m_txId; });
+            if (txIt == txEnd)
+            {
+                break;
+            }
+            (*txIt)->update(item);
+        }
+        sortTx();
+    }
+    else if (action == grimm::wallet::ChangeAction::Added)
+    {
+        // TODO in sort order
+        for (const auto& item : items)
+        {
+            _txList.insert(0, new TxObject(item));
+        }
+        sortTx();
+    }
+
+    qDeleteAll(deletedObjects);
+
+    // Get info for TxObject::_user_name (get wallets labels)
+    _model.getAsync()->getAddresses(false);
+
+}
+
+void WalletViewModel::onChangeCalculated(grimm::Amount change)
+{
+    if (_change != change)
+    {
+        _change = change;
+        emit changeChanged();
+    }
+    emit actualAvailableChanged();
+}
+
+void WalletViewModel::onChangeCurrentWalletIDs(grimm::wallet::WalletID senderID, grimm::wallet::WalletID receiverID)
+{
+    //setSenderAddr(toString(senderID));
+    setReceiverAddr(toString(receiverID));
+}
+
+QString WalletViewModel::available() const
+{
+    return GrimmToString(_status.available);
+}
+
+QString WalletViewModel::receiving() const
+{
+    return GrimmToString(_status.receiving);
+}
+
+QString WalletViewModel::sending() const
+{
+    return GrimmToString(_status.sending);
+}
+
+QString WalletViewModel::maturing() const
+{
+    return GrimmToString(_status.maturing);
+}
+
+QString WalletViewModel::sendAmount() const
+{
+    return _sendAmount;
+}
+
+QString WalletViewModel::getAmountMissingToSend() const
+{
+    Amount missed = calcTotalAmount() - _status.available;
+    if (missed > 99999)
+    {
+        //% "grimms"
+        return GrimmToString(missed) + " " +qtTrId("tx-curency-name");
+    }
+    //% "centums"
+    return QLocale().toString(static_cast<qulonglong>(missed)) + " " + qtTrId("tx-curency-sub-name");
+}
+
+double WalletViewModel::getAmountForReceive() const
+{
+    return _amountForReceive;
+}
+
+void WalletViewModel::setAmountForReceive(double value)
+{
+    if (value != _amountForReceive)
+    {
+        _amountForReceive = value;
+        _qr->setAmount(_amountForReceive);
+        emit amountForReceiveChanged();
+    }
+}
+
+QString WalletViewModel::feeCentumes() const
+{
+    return _feeCentumes;
+}
+
+QString WalletViewModel::getReceiverAddr() const
+{
+    return _receiverAddr;
+}
+
+void WalletViewModel::setReceiverAddr(const QString& value)
+{
+    auto trimmedValue = value.trimmed();
+    if (_receiverAddr != trimmedValue)
+    {
+        _receiverAddr = trimmedValue;
+        emit receiverAddrChanged();
+    }
+}
+
+bool WalletViewModel::isValidReceiverAddress(const QString& value)
+{
+    return check_receiver_address(value.toStdString());
+}
+
+bool WalletViewModel::isPasswordReqiredToSpendMoney() const
+{
+    return _settings.isPasswordReqiredToSpendMoney();
+}
+
+bool WalletViewModel::isPasswordValid(const QString& value) const
+{
+    SecString secretPass = value.toStdString();
+    return AppModel::getInstance()->checkWalletPassword(secretPass);
+}
+
+bool WalletViewModel::isAddressWithCommentExist(const QString& comment) const
+{
+    return _model.isAddressWithCommentExist(comment.toStdString());
+}
+
+void WalletViewModel::setSendAmount(const QString& value)
+{
+    auto trimmedValue = value.trimmed();
+    if (trimmedValue != _sendAmount)
+    {
+        _sendAmount = trimmedValue;
+        _model.getAsync()->calcChange(calcTotalAmount());
+        emit sendAmountChanged();
+    }
+}
+
+void WalletViewModel::setFeeCentumes(const QString& value)
+{
+    auto trimmedValue = value.trimmed();
+    if (trimmedValue != _feeCentumes)
+    {
+        _feeCentumes = trimmedValue;
+        _model.getAsync()->calcChange(calcTotalAmount());
+        emit feeCentumesChanged();
+    }
+}
+
+void WalletViewModel::setComment(const QString& value)
+{
+    if (_comment != value)
+    {
+        _comment = value;
+        emit commentChanged();
+    }
+}
+
+QString WalletViewModel::getComment() const
+{
+    return _comment;
+}
+
+QString WalletViewModel::sortRole() const
+{
+    return _sortRole;
+}
+
+void WalletViewModel::setSortRole(const QString& value)
+{
+    if (value != getDateRole() && value != getAmountRole() &&
+        value != getStatusRole() && value != getUserRole())
+        return;
+
+    _sortRole = value;
+    sortTx();
+}
+
+Qt::SortOrder WalletViewModel::sortOrder() const
+{
+    return _sortOrder;
+}
+
+void WalletViewModel::setSortOrder(Qt::SortOrder value)
+{
+    _sortOrder = value;
+    sortTx();
+}
+
+QString WalletViewModel::getIncomeRole() const
+{
+    return "income";
+}
+
+QString WalletViewModel::getDateRole() const
+{
+    return "date";
+}
+
+QString WalletViewModel::getUserRole() const
+{
+    return "user";
+}
+
+QString WalletViewModel::getDisplayNameRole() const
+{
+    return "displayName";
+}
+
+QString WalletViewModel::getAmountRole() const
+{
+    return "amount";
+}
+
+QString WalletViewModel::getStatusRole() const
+{
+    return "status";
+}
+
+int WalletViewModel::getDefaultFeeInCentum() const
+{
+  return _model.isFork1() ? kFeeInCentum_Fork1 : kDefaultFeeInCentum;
+}
+
+int WalletViewModel::getMinFeeInCentum() const
+{
+  return _model.isFork1() ? kFeeInCentum_Fork1 : 0;
+}
+
+void WalletViewModel::setExpires(int value)
+{
+    if (value != _expires)
+    {
+        _expires = value;
+        emit expiresChanged();
+    }
+}
+
+int WalletViewModel::getExpires() const
+{
+    return _expires;
+}
+
+bool WalletViewModel::isAllowedgrimmLinks() const
+{
+    return _settings.isAllowedgrimmLinks();
+}
+
+void WalletViewModel::allowgrimmLinks(bool value)
+{
+    _settings.setAllowedgrimmLinks(value);
+}
+
+QQmlListProperty<TxObject> WalletViewModel::getTransactions()
+{
+    return QQmlListProperty<TxObject>(this, _txList);
+}
+
+grimm::Amount WalletViewModel::calcSendAmount() const
+{
+    return std::round(_sendAmount.toDouble() * Rules::Coin);
+}
+
+grimm::Amount WalletViewModel::calcFeeAmount() const
+{
+    return _feeCentumes.toULongLong();
+}
+
+grimm::Amount WalletViewModel::calcTotalAmount() const
+{
+    return calcSendAmount() + calcFeeAmount();
+}
+
+void WalletViewModel::sortTx()
+{
+    auto cmp = generateComparer();
+    std::sort(_txList.begin(), _txList.end(), cmp);
+
+    emit transactionsChanged();
+}
+
+std::function<bool(const TxObject*, const TxObject*)> WalletViewModel::generateComparer()
+{
+    if (_sortRole == getIncomeRole())
+        return [sortOrder = _sortOrder](const TxObject* lf, const TxObject* rt)
+    {
+        return compareTx(lf->getTxDescription().m_sender, rt->getTxDescription().m_sender, sortOrder);
+    };
+
+    if (_sortRole == getUserRole())
+        return [sortOrder = _sortOrder](const TxObject* lf, const TxObject* rt)
+    {
+        return compareTx(lf->user(), rt->user(), sortOrder);
+    };
+
+    if (_sortRole == getDisplayNameRole())
+        return [sortOrder = _sortOrder](const TxObject* lf, const TxObject* rt)
+    {
+        return compareTx(lf->displayName(), rt->displayName(), sortOrder);
+    };
+
+    if (_sortRole == getAmountRole())
+        return [sortOrder = _sortOrder](const TxObject* lf, const TxObject* rt)
+    {
+        return compareTx(lf->getTxDescription().m_amount, rt->getTxDescription().m_amount, sortOrder);
+    };
+
+    if (_sortRole == getStatusRole())
+        return [sortOrder = _sortOrder](const TxObject* lf, const TxObject* rt)
+    {
+        return compareTx(lf->status(), rt->status(), sortOrder);
+    };
+
+    // defult for dateRole
+    return [sortOrder = _sortOrder](const TxObject* lf, const TxObject* rt)
+    {
+        return compareTx(lf->getTxDescription().m_createTime, rt->getTxDescription().m_createTime, sortOrder);
+    };
+}
+
+void WalletViewModel::sendMoney()
+{
+    if (/*!_senderAddr.isEmpty() && */isValidReceiverAddress(getReceiverAddr()))
+    {
+        WalletID walletID(Zero);
+
+        walletID.FromHex(getReceiverAddr().toStdString());
+
+        // TODO: show 'operation in process' animation here?
+        _model.getAsync()->sendMoney(walletID, _comment.toStdString(), calcSendAmount(), calcFeeAmount());
+    }
+}
+
+QString WalletViewModel::actualAvailable() const
+{
+    return GrimmToString(_status.available - calcTotalAmount() - _change);
+}
+
+bool WalletViewModel::isEnoughMoney() const
+{
+    return _status.available >= calcTotalAmount() + _change;
+}
+
+QString WalletViewModel::change() const
+{
+    return GrimmToString(_change);
+}
+
+QString WalletViewModel::getNewReceiverAddr() const
+{
+    return toString(_newReceiverAddr.m_walletID);
+}
+
+QString WalletViewModel::getNewReceiverAddrQR() const
+{
+    return _qr->getEncoded();
+}
+
+void WalletViewModel::setNewReceiverName(const QString& value)
+{
+    auto trimmedValue = value.trimmed();
+    if (_newReceiverName != trimmedValue)
+    {
+        _newReceiverName = trimmedValue;
+        emit newReceiverNameChanged();
+    }
+}
+
+QString WalletViewModel::getNewReceiverName() const
+{
+    return _newReceiverName;
+}
+
+void WalletViewModel::onAddresses(bool own, const std::vector<grimm::wallet::WalletAddress>& addresses)
+{
+    if (own)
+    {
+        return;
+    }
+
+    for (auto* tx : _txList)
+    {
+        auto foundIter = std::find_if(addresses.cbegin(), addresses.cend(),
+                                      [tx](const auto& address) { return address.m_walletID == tx->peerId(); });
+
+        if (foundIter != addresses.cend())
+        {
+            tx->setUserName(QString::fromStdString(foundIter->m_label));
+        }
+        else if (!tx->userName().isEmpty())
+        {
+            tx->setUserName(QString{});
+        }
+
+        auto displayName = tx->userName().isEmpty() ? tx->user() : tx->userName();
+        tx->setDisplayName(displayName);
+    }
+}
+
+void WalletViewModel::onGeneratedNewAddress(const grimm::wallet::WalletAddress& addr)
+{
+    _newReceiverAddr = addr;
+    setExpires(0);
+    _qr->setAddr(toString(_newReceiverAddr.m_walletID));
+}
+
+void WalletViewModel::onNewAddressFailed()
+{
+    emit newAddressFailed();
+}
+
+void WalletViewModel::onSendMoneyVerified()
+{
+    // retranslate to qml
+    emit sendMoneyVerified();
+}
+
+void WalletViewModel::onCantSendToExpired()
+{
+    // retranslate to qml
+    emit cantSendToExpired();
+}
+
+void WalletViewModel::onReceiverQRChanged()
+{
+    emit newReceiverAddrChanged();
+}

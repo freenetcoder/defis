@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Слой_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 277 277" style="enable-background:new 0 0 277 277;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:url(#SVGID_2_);}
+	.st2{fill:url(#SVGID_3_);}
+</style>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="0" y1="138.9" x2="277" y2="138.9" gradientTransform="matrix(1 0 0 -1 0 278)">
+	<stop  offset="0" style="stop-color:#007C6C"/>
+	<stop  offset="1" style="stop-color:#003F37"/>
+</linearGradient>
+<path class="st0" d="M272,20.5H5c-2.8,0-5,2.2-5,5v200.2c0,2.8,2.2,5,5,5h99.2l-3.4,17h-7.5c-2.8,0-5,2.2-5,5s2.2,5,5,5h90.3
+	c2.8,0,5-2.2,5-5s-2.2-5-5-5h-7.5l-3.4-17H272c2.8,0,5-2.2,5-5V25.5c0-1.3-0.5-2.6-1.5-3.5C274.6,21,273.3,20.5,272,20.5z
+	 M267,220.6H138.5c-2.8,0-5,2.2-5,5s2.2,5,5,5h24.1l3.4,17h-55l4.2-21l-0.1-0.1c0.1-0.3,0.2-0.6,0.2-0.9c0-2.8-2.2-5-5-5H10V30.4
+	h10.2v160.7c0,2.8,2.2,5,5,5h226.7c2.8,0,5-2.2,5-5V45.7c0-2.8-2.2-5-5-5s-5,2.2-5,5v140.4H30.1V30.4H267V220.6z"/>
+<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="87.2856" y1="169.7" x2="125.9" y2="169.7" gradientTransform="matrix(1 0 0 -1 0 278)">
+	<stop  offset="0" style="stop-color:#007C6C"/>
+	<stop  offset="1" style="stop-color:#003F37"/>
+</linearGradient>
+<path class="st1" d="M92.2,117.2c4.3,2.6,6.9,7.2,6.9,12.1v29c0,9.7,7.9,17.6,17.6,17.6h4.1c2.8,0,5-2.2,5-5s-2.2-5-5-5h-4
+	c-4.2,0-7.6-3.4-7.6-7.6v-29c0-8.5-4.5-16.3-11.8-20.7l-2.6,4.3l2.6-4.9c7.3-4.4,11.7-12.2,11.8-20.7v-29c0-4.2,3.4-7.6,7.6-7.6h4.1
+	c2.8,0,5-2.2,5-5s-2.2-5-5-5h-4.1c-9.7,0-17.6,7.9-17.6,17.6v29c0,5-2.6,9.6-6.9,12.1c-3.1,1.9-5,5.2-5,8.9
+	C87.1,111.9,89,115.3,92.2,117.2z"/>
+<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="151.3" y1="169.7" x2="189.9" y2="169.7" gradientTransform="matrix(1 0 0 -1 0 278)">
+	<stop  offset="0" style="stop-color:#007C6C"/>
+	<stop  offset="1" style="stop-color:#003F37"/>
+</linearGradient>
+<path class="st2" d="M168,129.3v29c0,4.2-3.4,7.6-7.6,7.6h-4.1c-2.8,0-5,2.2-5,5s2.2,5,5,5h4.1c9.7,0,17.6-7.9,17.6-17.6v-29
+	c0-5,2.6-9.6,6.9-12.1c3.1-1.9,5-5.2,5-8.9c0-3.6-1.9-7-5-8.9c-4.3-2.6-6.9-7.2-6.9-12.1v-29c0-9.7-7.9-17.6-17.6-17.6h-4.1
+	c-2.8,0-5,2.2-5,5s2.2,5,5,5h4.1c4.2,0,7.6,3.4,7.6,7.6v29c0,8.5,4.5,16.3,11.8,20.7l2.6-4.3l-2.6,4.9
+	C172.5,112.9,168,120.8,168,129.3z"/>
+</svg>

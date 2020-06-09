@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Defis Wallet
+Comment=No one will ever know
+Exec=/usr/bin/DefisWallet %U
+Icon=grimm
+Terminal=false
+Type=Application
+Categories=Network
+MimeType=application/x-grimm-item;
+GenericName=Defis Wallet
