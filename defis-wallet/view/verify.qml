@@ -29,7 +29,7 @@ Rectangle {
 
 
     ColumnLayout {
-        id: mainColumn
+        id: mainColumnM
         anchors.fill: parent
         spacing: 20
         anchors.bottomMargin: 30
@@ -72,7 +72,7 @@ Rectangle {
                 clip: true
 
                 RowLayout {
-                    width: mainColumn.width
+                    width: mainColumnM.width
                     spacing: 10
 
 
@@ -80,7 +80,7 @@ Rectangle {
 
 
                     ColumnLayout {
-                        Layout.preferredWidth: mainColumn.width
+                        Layout.preferredWidth: mainColumnM.width
                         Layout.alignment: Qt.AlignTop | Qt.AlignRight
 
 
