@@ -511,140 +511,22 @@ Rectangle {
                                     }
                                 }
 
-                                Item {
-                                                      Layout.preferredHeight: 12
-                                                      visible: viewModel.localNodeRun
-                                                  }
-
-                                                  SFText {
-                                                      Layout.preferredHeight: 21
-                                                      //: settings tab, node section, title
-                                                      //% "Mining"
-                                                      text: qsTrId("settings-mining-title")
-                                                      color: Style.content_main
-                                                      font.pixelSize: 18
-                                                      font.styleName: "Bold"; font.weight: Font.Bold
-                                                      visible: viewModel.localNodeRun
-                                                  }
-
-                                                  RowLayout {
-                                                      Layout.preferredHeight: 16
-                                                      visible: viewModel.localNodeRun && !viewModel.useGpu
-
-
-                                                  SFText {
-                                                     //: settings tab, mining section, run cpu mining
-                                                     //% "CPU threads"
-                                                     text: qsTrId("settings-mining-cpu-threads")
-                                                     color: Style.white
-
-                                                     font.pixelSize: 14
-
-                                                  }
-
-                                                  FeeSlider {
-                                                     id: localNodeMiningThreads
-                                                     precision: 0
-                                                     showTicks: true
-
-                                                     Layout.fillWidth: true
-                                                     value: viewModel.localNodeMiningThreads
-                                                     to: {viewModel.coreAmount()}
-                                                     stepSize: 1
-                                                     enabled: localNodeRun.checked
-                                                     Binding {
-                                                         target: viewModel
-                                                         property: "localNodeMiningThreads"
-                                                         value: localNodeMiningThreads.value
-                                                     }
-                                                  }
-                                                  }
-
-
-
-                                                    CustomSwitch {
-                                                         id: useGpu
-                                                         Layout.topMargin: 50
-                                                         visible: viewModel.localNodeRun && !viewModel.localNodeMiningThreads
-                                                         text: qsTr("Use GPU")
-
-                                                         font.pixelSize: 12
-                                                         width: parent.width
-                                                         checked: viewModel.useGpu
-                                                         enabled: localNodeRun.checked && viewModel.hasSupportedGpu()
-                                                         Binding {
-                                                             target: viewModel
-                                                             property: "useGpu"
-                                                             value: useGpu.checked
-                                                         }
-                                                     }
 
 
 
 
-                                                     SFText {
-                                                         id: gpuError
-                                                         color: Style.white
-                                                         font.pixelSize: 14
-                                                         visible: !viewModel.hasSupportedGpu() && viewModel.localNodeRun && !viewModel.localNodeMiningThreads
-                                                         text: qsTr("You have unsupported videocard")
-                                                     }
 
-                                                     ListView {
-                                                     Layout.topMargin: 5
-                                                         Layout.fillWidth: true
-                                                         Layout.fillHeight: true
-                                                         Layout.minimumWidth: 140
-                                                         Layout.minimumHeight: 132
-                                                         visible: viewModel.hasSupportedGpu() && viewModel.localNodeRun && !viewModel.localNodeMiningThreads
-                                                         enabled: useGpu.checked
-                                                         model: viewModel.supportedDevices
-                                                         clip: true
-                                                         delegate: RowLayout {
-                                                             width: parent.width
-                                                             height: 22
 
-                                                             CustomCheckBox {
-                                                                 id: device_id
-                                                                 visible: viewModel.localNodeRun && !viewModel.localNodeMiningThreads
-                                                                 font.pixelSize: 12
-                                                                 enabled: localNodeRun.checked
-                                                                 palette.windowText: enabled ? Style.white : Style.disable_text_color
-                                                                 checked: modelData.enabled
-                                                                 text: modelData.name
-                                                                 onToggled: {
-                                                                     viewModel.propertiesChanged();
-                                                                 }
-                                                                 Binding {
-                                                                     target: modelData
-                                                                     property: "enabled"
-                                                                     value: device_id.checked
-                                                                 }
-                                                             }
-                                                         }
-                                                     }
 
-                                                     PrimaryButton {
-                                                         Layout.preferredHeight: 38
-                                                         Layout.preferredWidth: 125
-                                                         Layout.alignment: Qt.AlignRight
-                                                         leftPadding: 25
-                                                         rightPadding: 25
-                                                         spacing: 12
-                                                         visible: viewModel.localNodeRun
-                                                         //: settings tab, node section, apply button
-                                                         //% "apply"
-                                                         text: qsTrId("settings-apply")
-                                                         icon.source: "qrc:/assets/icon-done.svg"
-                                                         enabled: {
-                                                             viewModel.isChanged
-                                                             && nodeAddress.acceptableInput
-                                                             && localNodePort.acceptableInput
-                                                             && (localNodeRun.checked ? (viewModel.localNodePeers.length > 0) : viewModel.isValidNodeAddress)
-                                                         }
-                                                         onClicked: viewModel.applyChanges()
-                                                     }
 
+
+
+
+
+
+
+
+                                                  
 
 
                               SFText {
