@@ -181,7 +181,7 @@ bool parse_cmdline(int argc, char* argv[], Options& o) {
             }
         }
 
-        getRulesOptions(vm);
+        getRulesOptions(vm); //todo for assetchains
 
         return true;
     }

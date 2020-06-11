@@ -409,16 +409,6 @@ namespace grimm
             }
         }
 
-        getRulesOptions(vm);
-
-        return vm;
-    }
-
-    void getRulesOptions(po::variables_map& vm)
-    {
-        #define THE_MACRO(type, name, comment) Rules::get().name = vm[#name].as<type>();
-        RulesParams(THE_MACRO);
-        #undef THE_MACRO
         Rules::get().Emission.Value0 = vm[cli::CAC_EMISSION_BLOCK].as<Amount>();
         Rules::get().Emission.Premine = vm[cli::CAC_PREMINE].as<Amount>();
         Rules::get().Emission.Drop0 = vm[cli::CAC_EMISSION_DROP0].as<Amount>();
@@ -440,9 +430,16 @@ namespace grimm
         Rules::get().CA.Enabled = vm[cli::ASSET_ENABLE].as<bool>();
         Rules::get().CA.Deposit = vm[cli::ASSET_EXCHANGE].as<bool>();
 
-      //  Rules::get().isGrimmPOW = vm[cli::CAC_GRIMMPOW].as<bool>();
-      //  add other params
+        getRulesOptions(vm);
 
+        return vm;
+    }
+
+    void getRulesOptions(po::variables_map& vm)
+    {
+        #define THE_MACRO(type, name, comment) Rules::get().name = vm[#name].as<type>();
+        RulesParams(THE_MACRO);
+        #undef THE_MACRO
     }
 
     int getLogLevel(const std::string &dstLog, const po::variables_map& vm, int defaultValue)

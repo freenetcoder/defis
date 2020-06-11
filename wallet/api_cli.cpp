@@ -1058,7 +1058,7 @@ int main(int argc, char* argv[])
 
             vm.notify();
 
-            getRulesOptions(vm);
+            getRulesOptions(vm); //todo for assetchain
 
             Rules::get().UpdateChecksum();
             LOG_INFO() << "Grimm Wallet API " << PROJECT_VERSION << " (" << BRANCH_NAME << ")";
