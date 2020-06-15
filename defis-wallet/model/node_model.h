@@ -60,15 +60,15 @@ protected:
     uint16_t getLocalNodePort() override;
     std::string getLocalNodeStorage() override;
     unsigned int getLocalNodeMiningThreads() override;
-    unsigned long long getcac_premine();
+    unsigned long long getcac_premine() override;
 
-    unsigned long long getcac_blockreward();
-    unsigned long long getcac_drop0();
-    unsigned long long getcac_drop1();
-    unsigned int getcac_coinbasematurity();
-    unsigned int getcac_standartmaturity();
-    unsigned int getcac_blocktime();
-    unsigned int getcac_diff();
+    unsigned long long getcac_blockreward() override;
+    unsigned long long getcac_drop0() override;
+    unsigned long long getcac_drop1() override;
+    unsigned int getcac_coinbasematurity() override;
+    unsigned int getcac_standartmaturity() override;
+    unsigned int getcac_blocktime() override;
+    unsigned int getcac_diff() override;
 
 
 

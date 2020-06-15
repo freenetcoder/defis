@@ -165,9 +165,9 @@ public:
 
 protected:
 	int64_t m_RootOffset;
-	
+
 private:
-	Node* m_pRoot;
+	//Node* m_pRoot; 
 
   void set_Root(Node*);
 

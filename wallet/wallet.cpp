@@ -287,7 +287,7 @@ namespace grimm::wallet
            m_WalletDB->get_MasterKdf()->DeriveKey(sk, kid);
            AssetID aid = Zero;
            grimm::proto::Sk2Pk(aid, sk);
-           assert(aid != Zero);
+           //assert(aid != Zero);
            assetID = aid;
            LOG_INFO() << "Asset ID: " << assetID;
        }
