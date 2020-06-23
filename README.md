@@ -1,4 +1,14 @@
-Build instructions:
+![alt text](https://i.ibb.co/gDxss6m/1500x500.jpg)
+
+# DEFIS - A next generation Decentralized Financial System
+
+Built on top of the cryptographic primitives. Owners of different cryptocurrencies can earn interest, borrow, exchange, and create custom cryptocurrencies on DEFIS all in a completely decentralized and anonymous manner
+
+![alt text](https://i.ibb.co/qxVykb5/Ea-JOQNWWk-AAm-Yo-C.jpg)
+
+## [Download latest releases](https://github.com/freenetcoder/defis/releases) 
+
+### Build instructions:
 
 ### Ubuntu 18.04
 Install gcc7 boost ssl packages.
