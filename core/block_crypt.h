@@ -150,6 +150,8 @@ namespace grimm
 		bool isAssetchain = false;
 		bool isGrimmPOW = true;
 		std::string CoinSymbol = "XGM"; //by default
+		std::string AssetchainIdentifer1 = "G";
+		std::string AssetchainIdentifer2 = "m";
 		Height TMS = 0; //Treasury MaturityStep for Assetchains in heights, default 0
 		uint32_t MB = 0; //Treasury steps quantity, default 0
 

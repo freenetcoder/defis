@@ -49,6 +49,12 @@ public:
     QString getLocalNodecac_symbol() const;
     void setLocalNodecac_symbol(const QString& cacsymbol);
 
+    QString getLocalNodecac_id1() const;
+    void setLocalNodecac_id1(const QString& cacid1);
+
+    QString getLocalNodecac_id2() const;
+    void setLocalNodecac_id2(const QString& cacid2);
+
     unsigned long long getcac_blockreward() const;
     void setcac_blockreward(long long blockreward);
 
@@ -129,6 +135,8 @@ signals:
     void cac_diffChanged();
 
     void localNodecac_symbolChanged();
+    void localNodecac_id1Changed();
+    void localNodecac_id2Changed();
 
     #ifdef XGM_USE_GPU
    void localNodeUseGpuChanged();

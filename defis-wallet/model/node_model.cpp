@@ -168,6 +168,18 @@ std::string NodeModel::getLocalNodecac_symbol()
     return cac_symbol.toStdString();
 }
 
+std::string NodeModel::getLocalNodecac_id1()
+{
+    auto cac_id1 = AppModel::getInstance()->getSettings().getLocalNodecac_id1();
+    return cac_id1.toStdString();
+}
+
+std::string NodeModel::getLocalNodecac_id2()
+{
+    auto cac_id2 = AppModel::getInstance()->getSettings().getLocalNodecac_id2();
+    return cac_id2.toStdString();
+}
+
 std::string NodeModel::getTempDir()
 {
     return AppModel::getInstance()->getSettings().getTempDir();

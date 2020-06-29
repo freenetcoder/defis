@@ -183,8 +183,12 @@ void NodeClient::runLocalNode()
     node.m_Cfg.m_cac_standartmaturity = m_observer->getcac_standartmaturity();
     node.m_Cfg.m_cac_blocktime = m_observer->getcac_blocktime();
     node.m_Cfg.m_cac_diff = m_observer->getcac_diff();
-    
+
     node.m_Cfg.m_cac_symbol = m_observer->getLocalNodecac_symbol();
+    node.m_Cfg.m_cac_id1 = m_observer->getLocalNodecac_id1();
+    node.m_Cfg.m_cac_id2 = m_observer->getLocalNodecac_id2();
+
+
     node.m_Cfg.m_VerificationThreads = kVerificationThreadsMaxAvailable;
 
 

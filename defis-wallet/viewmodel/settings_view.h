@@ -67,6 +67,8 @@ class SettingsViewModel : public QObject
     Q_PROPERTY(uint cac_diffid READ getcac_diff WRITE setcac_diff NOTIFY cac_diffChanged)
 
     Q_PROPERTY(QString localNodecac_symbol READ getLocalNodecac_symbol WRITE setLocalNodecac_symbol NOTIFY localNodecac_symbolChanged)
+    Q_PROPERTY(QString localNodecac_id1 READ getLocalNodecac_id1 WRITE setLocalNodecac_id1 NOTIFY localNodecac_id1Changed)
+    Q_PROPERTY(QString localNodecac_id2 READ getLocalNodecac_id2 WRITE setLocalNodecac_id2 NOTIFY localNodecac_id2Changed)
     Q_PROPERTY(bool isChanged READ isChanged NOTIFY propertiesChanged)
     Q_PROPERTY(QStringList localNodePeers READ getLocalNodePeers NOTIFY localNodePeersChanged)
     Q_PROPERTY(int lockTimeout READ getLockTimeout WRITE setLockTimeout NOTIFY lockTimeoutChanged)
@@ -124,6 +126,13 @@ public:
 
     QString getLocalNodecac_symbol() const;
     void setLocalNodecac_symbol(const QString& value);
+
+    QString getLocalNodecac_id1() const;
+    void setLocalNodecac_id1(const QString& value);
+
+    QString getLocalNodecac_id2() const;
+    void setLocalNodecac_id2(const QString& value);
+
     int getLockTimeout() const;
     void setLockTimeout(int value);
     bool isPasswordReqiredToSpendMoney() const;
@@ -190,6 +199,10 @@ signals:
     void cac_diffChanged();
 
     void localNodecac_symbolChanged();
+
+    void localNodecac_id1Changed();
+    void localNodecac_id2Changed();
+
     void localNodePeersChanged();
     void propertiesChanged();
     void lockTimeoutChanged();
@@ -224,6 +237,8 @@ private:
 
 
     QString m_localNodecac_symbol;
+    QString m_localNodecac_id1;
+    QString m_localNodecac_id2;
 
     QStringList m_localNodePeers;
     QList<DeviceItem*> m_supportedDevices;

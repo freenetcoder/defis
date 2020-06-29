@@ -149,6 +149,8 @@ namespace grimm
 
         // Confidential Assetchains (CAC)
         extern const char* CAC_SYMBOL;
+        extern const char* CAC_ID1;
+        extern const char* CAC_ID2;
         extern const char* CAC_PORT;
         extern const char* CAC_PORT_FULL;
         extern const char* CAC_EMISSION_BLOCK;

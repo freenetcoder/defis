@@ -73,6 +73,8 @@ protected:
 
 
     std::string getLocalNodecac_symbol() override;
+    std::string getLocalNodecac_id1() override;
+    std::string getLocalNodecac_id2() override;
 
     std::string getTempDir() override;
     std::string getCACNodeStorage() override;

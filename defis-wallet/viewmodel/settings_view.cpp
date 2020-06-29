@@ -347,6 +347,36 @@ void SettingsViewModel::setLocalNodecac_symbol(const QString& value)
     }
 }
 
+QString SettingsViewModel::getLocalNodecac_id1() const
+{
+    return m_localNodecac_id1;
+}
+
+void SettingsViewModel::setLocalNodecac_id1(const QString& value)
+{
+    if (value != m_localNodecac_id1)
+    {
+        m_localNodecac_id1 = value;
+        emit localNodecac_id1Changed();
+        emit propertiesChanged();
+    }
+}
+
+
+QString SettingsViewModel::getLocalNodecac_id2() const
+{
+    return m_localNodecac_id2;
+}
+
+void SettingsViewModel::setLocalNodecac_id2(const QString& value)
+{
+    if (value != m_localNodecac_id2)
+    {
+        m_localNodecac_id2 = value;
+        emit localNodecac_id2Changed();
+        emit propertiesChanged();
+    }
+}
 
 int SettingsViewModel::getLockTimeout() const
 {
@@ -534,6 +564,8 @@ bool SettingsViewModel::isChanged() const
         || m_cac_blocktime != m_settings.getcac_blocktime()
         || m_cac_diff != m_settings.getcac_diff()
         || m_localNodecac_symbol != m_settings.getLocalNodecac_symbol()
+        || m_localNodecac_id1 != m_settings.getLocalNodecac_id1()
+        || m_localNodecac_id2 != m_settings.getLocalNodecac_id2()
         #ifdef XGM_USE_GPU
                 || m_useGpu != m_settings.getUseGpu()
                 || (!m_supportedDevices.empty() && m_settings.getMiningDevices() != getSelectedDevice())
@@ -566,6 +598,8 @@ void SettingsViewModel::applyChanges()
 
 
     m_settings.setLocalNodecac_symbol(m_localNodecac_symbol);
+    m_settings.setLocalNodecac_id1(m_localNodecac_id1);
+    m_settings.setLocalNodecac_id2(m_localNodecac_id2);
     m_settings.setLocalNodePeers(m_localNodePeers);
     #ifdef XGM_USE_GPU
     m_settings.setUseGpu(m_useGpu);
@@ -621,10 +655,12 @@ void SettingsViewModel::undoChanges()
     setcac_blocktime(m_settings.getcac_blocktime());
     setcac_diff(m_settings.getcac_diff());
     setcac_standartmaturity(m_settings.getcac_standartmaturity());
-   
+
 
 
     setLocalNodecac_symbol(m_settings.getLocalNodecac_symbol());
+    setLocalNodecac_id1(m_settings.getLocalNodecac_id1());
+    setLocalNodecac_id2(m_settings.getLocalNodecac_id2());
     setLockTimeout(m_settings.getLockTimeout());
     setLocalNodePeers(m_settings.getLocalNodePeers());
     #ifdef XGM_USE_GPU

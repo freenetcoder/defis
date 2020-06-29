@@ -80,6 +80,8 @@ struct Node
 		unsigned int m_cac_diff = 1;
 
 		std::string m_cac_symbol = "XGM";
+		std::string m_cac_id1 = "G";
+		std::string m_cac_id2 = "m";
 
 		bool m_LogUtxos = false; // may be insecure. Off by default.
 

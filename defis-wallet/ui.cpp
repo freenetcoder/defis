@@ -174,6 +174,9 @@ int main (int argc, char* argv[])
   if (Rules::get().isAssetchain) {
            LOG_INFO() << "Confidential Assetchain Symbol: " << vm[cli::CAC_SYMBOL].as<string>();
            LOG_INFO() << vm[cli::CAC_SYMBOL].as<string>() << " Node " << PROJECT_VERSION << " (" << BRANCH_NAME << ")";
+           LOG_INFO() << "Confidential Assetchain node connection id1 " << vm[cli::CAC_ID1].as<string>();
+           LOG_INFO() << "Confidential Assetchain node connection id2 " << vm[cli::CAC_ID2].as<string>();
+
 
 
 
@@ -192,6 +195,12 @@ int main (int argc, char* argv[])
               string cac_symbol = vm[cli::CAC_SYMBOL].as<string>();
               settings.setLocalNodecac_symbol(cac_symbol.c_str());
 
+              string cac_id1 = vm[cli::CAC_ID1].as<string>();
+              settings.setLocalNodecac_id1(cac_id1.c_str());
+
+              string cac_id2 = vm[cli::CAC_ID2].as<string>();
+              settings.setLocalNodecac_id2(cac_id2.c_str());
+
               grimm::Amount pre_cac = vm[cli::CAC_PREMINE].as<grimm::Amount>();
               long long cac_premine = int64_t(pre_cac)/100000000; //to show in coins, not in sats (10*8)
               settings.setcac_premine(cac_premine);
@@ -201,30 +210,30 @@ int main (int argc, char* argv[])
               settings.setcac_blockreward(cac_blockreward);
 
               grimm::Amount pre2_cac = vm[cli::CAC_EMISSION_DROP0].as<grimm::Amount>();
-              long long cac_drop0 = int64_t(pre2_cac); 
+              long long cac_drop0 = int64_t(pre2_cac);
               settings.setcac_drop0(cac_drop0);
 
               grimm::Amount pre3_cac = vm[cli::CAC_EMISSION_DROP1].as<grimm::Amount>();
-              long long cac_drop1 = int64_t(pre3_cac); 
+              long long cac_drop1 = int64_t(pre3_cac);
               settings.setcac_drop1(cac_drop1);
 
               grimm::Height pre4_cac = vm[cli::CAC_MATURITY_COINBASE].as<grimm::Height>();
-              int cac_coinbasematurity = int64_t(pre4_cac); 
+              int cac_coinbasematurity = int64_t(pre4_cac);
               settings.setcac_coinbasematurity(cac_coinbasematurity);
 
               grimm::Height pre5_cac = vm[cli::CAC_MATURITY_STANDART].as<grimm::Height>();
-              int cac_standartmaturity = int64_t(pre5_cac); 
+              int cac_standartmaturity = int64_t(pre5_cac);
               settings.setcac_standartmaturity(cac_standartmaturity);
 
               uint32_t pre6_cac = vm[cli::CAC_BLOCK_TIME].as<uint32_t>();
-              int cac_blocktime = int32_t(pre6_cac); 
+              int cac_blocktime = int32_t(pre6_cac);
               settings.setcac_blocktime(cac_blocktime);
 
               uint32_t pre7_cac = vm[cli::CAC_DIFF_S].as<uint32_t>();
-              int cac_diff = int32_t(pre7_cac); 
+              int cac_diff = int32_t(pre7_cac);
               settings.setcac_diff(cac_diff);
 
-            
+
 
             if (settings.getNodeAddress().isEmpty())
             {

@@ -200,6 +200,8 @@ int main_impl(int argc, char* argv[])
                LOG_INFO() << "Confidential Assetchain Symbol: " << vm[cli::CAC_SYMBOL].as<string>();
                LOG_INFO() << vm[cli::CAC_SYMBOL].as<string>() << " Node " << PROJECT_VERSION << " (" << BRANCH_NAME << ")";
                port  = vm[cli::CAC_PORT].as<uint16_t>();
+               LOG_INFO() << "Confidential Assetchain node connection id1 " << vm[cli::CAC_ID1].as<string>();
+               LOG_INFO() << "Confidential Assetchain node connection id2 " << vm[cli::CAC_ID2].as<string>();
 
 
          } else {
@@ -242,6 +244,8 @@ int main_impl(int argc, char* argv[])
 
                     node.m_Cfg.m_Observer = &observer;
                     node.m_Cfg.m_cac_symbol = vm[cli::CAC_SYMBOL].as<string>();
+                    node.m_Cfg.m_cac_id1 = vm[cli::CAC_ID1].as<string>();
+                    node.m_Cfg.m_cac_id2 = vm[cli::CAC_ID2].as<string>();
 
 					node.m_Cfg.m_Listen.port(port);
 					node.m_Cfg.m_Listen.ip(INADDR_ANY);

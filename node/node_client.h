@@ -35,6 +35,9 @@ public:
     virtual void onSyncError(Node::IObserver::Error error) = 0;
     virtual unsigned int getLocalNodeMiningThreads() = 0;
     virtual std::string getLocalNodecac_symbol() = 0;
+    virtual std::string getLocalNodecac_id1() = 0;
+    virtual std::string getLocalNodecac_id2() = 0;
+
 
     virtual unsigned long long getcac_premine() = 0;
     virtual unsigned long long getcac_blockreward() = 0;

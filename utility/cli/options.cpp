@@ -152,6 +152,8 @@ namespace grimm
 
         // Confidential Assetchains (CAC)
         const char* CAC_SYMBOL = "cac_symbol";
+        const char* CAC_ID1 = "cac_id1";
+        const char* CAC_ID2 = "cac_id2";
         const char* CAC_PORT = "cac_port";
         const char* CAC_PORT_FULL = "cac_port";
         const char* CAC_PREMINE = "cac_premine";
@@ -302,6 +304,8 @@ namespace grimm
         po::options_description cac_options("Confidential Assetchains (CAC) options");
         cac_options.add_options()
         (cli::CAC_SYMBOL, po::value<string>()->default_value("XGM"), "CAC symbol/ticker")
+        (cli::CAC_ID1, po::value<string>()->default_value("G"), "CAC Assetchain connection id1")
+        (cli::CAC_ID2, po::value<string>()->default_value("m"), "CAC Assetchain connection id2")
         (cli::CAC_PORT_FULL, po::value<uint16_t>()->default_value(10015), "CAC port to start the server on")
         (cli::CAC_PREMINE, po::value<Amount>()->default_value(10000000000), "CAC premine at 1st block in the smallest unit of the coin (1 coin = 10^8 units)")
         (cli::CAC_EMISSION_BLOCK, po::value<Amount>()->default_value(10000000000), "CAC initial coinbase emission in a single block in the smallest unit of the coin (1 coin = 10^8 units)")
@@ -424,6 +428,8 @@ namespace grimm
         Rules::get().AllowPublicUtxos = vm[cli::CAC_ALLOW_PUBLIC_UTXO].as<bool>();
         Rules::get().isAssetchain = ( (vm[cli::CAC_SYMBOL].as<string>() != "GRIMM") && (vm[cli::CAC_SYMBOL].as<string>() != "XGM") );
         Rules::get().CoinSymbol = vm[cli::CAC_SYMBOL].as<string>();
+        Rules::get().AssetchainIdentifer1 = vm[cli::CAC_ID1].as<string>();
+        Rules::get().AssetchainIdentifer2 = vm[cli::CAC_ID2].as<string>();
         Rules::get().DA.Difficulty0 = Difficulty(vm[cli::CAC_DIFF_S].as<uint32_t>() << Difficulty::s_MantissaBits);
         Rules::get().TMS = vm[cli::CAC_TREASURYM].as<Height>();
         Rules::get().MB = vm[cli::CAC_TREASURYB].as<uint32_t>();

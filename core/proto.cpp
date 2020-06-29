@@ -17,7 +17,6 @@
 #include "core/ecc_native.h"
 #include "proto.h"
 #include "../utility/logger.h"
-
 namespace grimm {
 namespace proto {
 
@@ -311,7 +310,7 @@ bool NotCalled_VerifyNoDuplicatedIDs(uint32_t id)
 /////////////////////////
 // NodeConnection
 NodeConnection::NodeConnection()
-    :m_Protocol('G', 'm', 10, sizeof(HighestMsgCode), *this, 20000)
+    :m_Protocol(Rules::get().AssetchainIdentifer1[0], Rules::get().AssetchainIdentifer2[0], 10, sizeof(HighestMsgCode), *this, 20000)
     ,m_ConnectPending(false)
 	,m_RulesCfgSent(false)
 	,m_PeerSupportsLogin1(false)

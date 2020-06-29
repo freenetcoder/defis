@@ -38,6 +38,8 @@ namespace
     const char* LocalNodeMiningThreads = "localnode/mining_threads";
 
     const char* LocalNodecac_symbol = "localnode/cac_symbol";
+    const char* LocalNodecac_id1 = "localnode/cac_id1";
+    const char* LocalNodecac_id2 = "localnode/cac_id2";
     const char* cacpremine = "lacalnode/cac_premine";
 
     const char* cacblockreward = "lacalnode/cac_blockreward";
@@ -254,14 +256,14 @@ unsigned long long WalletSettings::getcac_drop0() const
 {
     Lock lock(m_mutex);
     auto ch = m_data.value(cacdrop0).toLongLong();
-    return ch; 
+    return ch;
 }
 
 void WalletSettings::setcac_drop0(long long dro)
 {
     {
         Lock lock(m_mutex);
-        m_data.setValue(cacdrop0, dro); 
+        m_data.setValue(cacdrop0, dro);
     }
     emit cac_drop0Changed();
 }
@@ -270,7 +272,7 @@ unsigned long long WalletSettings::getcac_drop1() const
 {
     Lock lock(m_mutex);
     auto ch = m_data.value(cacdrop1).toLongLong();
-    return ch; 
+    return ch;
 }
 
 void WalletSettings::setcac_drop1(long long dro1)
@@ -286,7 +288,7 @@ unsigned int WalletSettings::getcac_coinbasematurity() const
 {
     Lock lock(m_mutex);
     auto ch = m_data.value(caccoinbasematurity).toInt();
-    return ch; 
+    return ch;
 }
 
 void WalletSettings::setcac_coinbasematurity(int coi)
@@ -302,14 +304,14 @@ unsigned int WalletSettings::getcac_standartmaturity() const
 {
     Lock lock(m_mutex);
     auto ch = m_data.value(cacstandartmaturity).toInt();
-    return ch; 
+    return ch;
 }
 
 void WalletSettings::setcac_standartmaturity(int sta)
 {
     {
         Lock lock(m_mutex);
-        m_data.setValue(cacstandartmaturity, sta); 
+        m_data.setValue(cacstandartmaturity, sta);
     }
     emit cac_standartmaturityChanged();
 }
@@ -325,7 +327,7 @@ void WalletSettings::setcac_blocktime(int blo1)
 {
     {
         Lock lock(m_mutex);
-        m_data.setValue(cacblocktime, blo1); 
+        m_data.setValue(cacblocktime, blo1);
     }
     emit cac_blocktimeChanged();
 }
@@ -341,7 +343,7 @@ void WalletSettings::setcac_diff(int dif)
 {
     {
         Lock lock(m_mutex);
-        m_data.setValue(cacdiff, dif); 
+        m_data.setValue(cacdiff, dif);
     }
     emit cac_diffChanged();
 }
@@ -361,6 +363,36 @@ void WalletSettings::setLocalNodecac_symbol(const QString& cacsymbol)
         m_data.setValue(LocalNodecac_symbol, cacsymbol);
     }
     emit localNodecac_symbolChanged();
+}
+
+QString WalletSettings::getLocalNodecac_id1() const
+{
+    Lock lock(m_mutex);
+    return m_data.value(LocalNodecac_id1).toString();
+}
+
+void WalletSettings::setLocalNodecac_id1(const QString& cacid1)
+{
+    {
+        Lock lock(m_mutex);
+        m_data.setValue(LocalNodecac_id1, cacid1);
+    }
+    emit localNodecac_id1Changed();
+}
+
+QString WalletSettings::getLocalNodecac_id2() const
+{
+    Lock lock(m_mutex);
+    return m_data.value(LocalNodecac_id2).toString();
+}
+
+void WalletSettings::setLocalNodecac_id2(const QString& cacsid2)
+{
+    {
+        Lock lock(m_mutex);
+        m_data.setValue(LocalNodecac_id2, cacsid2);
+    }
+    emit localNodecac_id2Changed();
 }
 
 string WalletSettings::getLocalNodeStorage() const

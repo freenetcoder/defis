@@ -251,6 +251,76 @@ Rectangle {
                                                           }
                                                       }
 
+
+                                                                                                        RowLayout {
+                                                                                                            Layout.preferredHeight: 16
+                                                                                                            visible: viewModel.localNodeRun
+
+                                                                                                            SFText {
+                                                                                                                Layout.fillWidth: true;
+                                                                                                                //: settings tab, node section, port label
+                                                                                                                //% "Port"
+                                                                                                                text: "CAC magic1"
+                                                                                                                color: Style.content_secondary
+                                                                                                                font.pixelSize: 14
+                                                                                                            }
+
+                                                                                                            Item {
+                                                                                                                Layout.fillWidth: true
+                                                                                                            }
+
+                                                                                                            SFTextInput {
+                                                                                                                id: localNodecac_id1
+                                                                                                                Layout.preferredWidth: nodeBlock.width * 0.55
+                                                                                                                Layout.alignment: Qt.AlignRight
+                                                                                                                activeFocusOnTab: true
+                                                                                                                font.pixelSize: 14
+                                                                                                                color: Style.content_main
+                                                                                                                text: viewModel.localNodecac_id1
+
+                                                                                                                }
+                                                                                                                Binding {
+                                                                                                                    target: viewModel
+                                                                                                                    property: "localNodecac_id1"
+                                                                                                                    value: localNodecac_id1.text
+                                                                                                                }
+                                                                                                            }
+
+
+                                                                                                                                                              RowLayout {
+                                                                                                                                                                  Layout.preferredHeight: 16
+                                                                                                                                                                  visible: viewModel.localNodeRun
+
+                                                                                                                                                                  SFText {
+                                                                                                                                                                      Layout.fillWidth: true;
+                                                                                                                                                                      //: settings tab, node section, port label
+                                                                                                                                                                      //% "Port"
+                                                                                                                                                                      text: "CAC magic2"
+                                                                                                                                                                      color: Style.content_secondary
+                                                                                                                                                                      font.pixelSize: 14
+                                                                                                                                                                  }
+
+                                                                                                                                                                  Item {
+                                                                                                                                                                      Layout.fillWidth: true
+                                                                                                                                                                  }
+
+                                                                                                                                                                  SFTextInput {
+                                                                                                                                                                      id: localNodecac_id2
+                                                                                                                                                                      Layout.preferredWidth: nodeBlock.width * 0.55
+                                                                                                                                                                      Layout.alignment: Qt.AlignRight
+                                                                                                                                                                      activeFocusOnTab: true
+                                                                                                                                                                      font.pixelSize: 14
+                                                                                                                                                                      color: Style.content_main
+                                                                                                                                                                      text: viewModel.localNodecac_id2
+
+                                                                                                                                                                      }
+                                                                                                                                                                      Binding {
+                                                                                                                                                                          target: viewModel
+                                                                                                                                                                          property: "localNodecac_id2"
+                                                                                                                                                                          value: localNodecac_id2.text
+                                                                                                                                                                      }
+                                                                                                                                                                  }
+
                                                       RowLayout {
                                                           Layout.preferredHeight: 16
                                                           visible: viewModel.localNodeRun
