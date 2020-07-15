@@ -1,0 +1,73 @@
+add_definitions()
+
+set(RDX_SRC
+  c_threads.h
+  aes_hash.cpp
+  aes_hash.hpp
+  allocator.cpp
+  allocator.hpp
+  argon2_avx2.c
+  argon2.h
+  argon2_core.c
+  argon2_core.h
+  argon2_ref.c
+  argon2_ssse3.c
+  assembly_generator_x86.cpp
+  assembly_generator_x86.hpp
+  blake2_generator.cpp
+  blake2_generator.hpp
+  bytecode_machine.cpp
+  bytecode_machine.hpp
+  common.hpp
+  configuration.h
+  cpu.cpp
+  cpu.hpp
+  dataset.cpp
+  dataset.hpp
+  instruction.cpp
+  instruction.hpp
+  instruction_weights.hpp
+  instructions_portable.cpp
+  intrin_portable.h
+  jit_compiler.hpp
+  jit_compiler_fallback.hpp
+  jit_compiler_x86.cpp
+  jit_compiler_x86.hpp
+  jit_compiler_x86_static.asm
+  jit_compiler_x86_static.hpp
+  jit_compiler_x86_static.S
+  program.hpp
+  randomx.cpp
+  randomx.h
+  reciprocal.c
+  reciprocal.h
+  soft_aes.cpp
+  soft_aes.h
+  superscalar.cpp
+  superscalar.hpp
+  superscalar_program.hpp
+  virtual_machine.cpp
+  virtual_machine.hpp
+  virtual_memory.cpp
+  virtual_memory.hpp
+  vm_compiled.cpp
+  vm_compiled.hpp
+  vm_compiled_light.cpp
+  vm_compiled_light.hpp
+  vm_interpreted.cpp
+  vm_interpreted.hpp
+  vm_interpreted_light.cpp
+  vm_interpreted_light.hpp
+  blake2/blake2.h
+  blake2/blake2-impl.h
+  blake2/blake2b.c
+  blake2/blamka-round-ref.h
+  blake2/blamka-round-ssse3.h
+  blake2/endian.h
+  asm/configuration.asm
+  hash-ops.h
+  rx-slow-hash.c
+)
+
+add_library(RandomX STATIC ${RDX_SRC})
+target_link_libraries(RandomX)
